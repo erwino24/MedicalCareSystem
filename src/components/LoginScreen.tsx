@@ -29,16 +29,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ users, onLoginSuccess 
     e.preventDefault();
     setErrorMessage('');
 
-    if (pin === activePractitioner.pinCode || pin === '') {
+    if (!pin.trim()) {
+      setErrorMessage(`Please enter your Security PIN for ${activePractitioner.fullName}.`);
+      return;
+    }
+
+    if (pin.trim() === String(activePractitioner.pinCode).trim()) {
       onLoginSuccess(activePractitioner);
     } else {
-      setErrorMessage(`Invalid PIN for ${activePractitioner.fullName}. (Or press Enter if blank)`);
+      setErrorMessage(`Incorrect Security PIN for ${activePractitioner.fullName}. Please try again.`);
     }
   };
 
-  const handleQuickDemoLogin = (role: 'DOCTOR' | 'NURSE') => {
-    const user = users.find((u) => u.role === role) || users[0];
-    onLoginSuccess(user);
+  const handleQuickFillPin = (user: PractitionerUser) => {
+    setPin(user.pinCode);
+    setErrorMessage('');
   };
 
   return (
@@ -157,22 +162,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ users, onLoginSuccess 
           </button>
         </form>
 
-        {/* Quick Demo Credentials Footer */}
+        {/* Quick Demo PIN Helper */}
         <div className="pt-4 border-t border-slate-100 text-center space-y-2">
-          <p className="text-[11px] text-slate-400 font-medium">Quick 1-Click Demo Login:</p>
-          <div className="flex justify-center space-x-2">
-            <button
-              onClick={() => handleQuickDemoLogin('DOCTOR')}
-              className="text-[11px] bg-teal-50 hover:bg-teal-100 text-teal-800 font-semibold px-3 py-1.5 rounded-lg border border-teal-200 transition"
-            >
-              👩‍⚕️ Sign In as Doctor
-            </button>
-            <button
-              onClick={() => handleQuickDemoLogin('NURSE')}
-              className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition"
-            >
-              🧑‍⚕️ Sign In as Nurse
-            </button>
+          <p className="text-[11px] text-slate-400 font-medium">Default Accounts (Saved in Excel Database):</p>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {users.map((u) => (
+              <button
+                key={u.id}
+                type="button"
+                onClick={() => {
+                  setSelectedRole(u.role);
+                  setSelectedUserId(u.id);
+                  handleQuickFillPin(u);
+                }}
+                className="text-[11px] bg-slate-100 hover:bg-teal-50 hover:text-teal-900 text-slate-700 font-medium px-2.5 py-1 rounded-lg border border-slate-200 transition"
+              >
+                {u.role === 'DOCTOR' ? '👩‍⚕️' : '🧑‍⚕️'} {u.fullName.split(' ')[0]} (PIN: {u.pinCode})
+              </button>
+            ))}
           </div>
         </div>
       </div>

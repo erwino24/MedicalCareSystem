@@ -35,8 +35,8 @@ export function App() {
     }
   });
 
-  // Authentication State
-  const [currentUser, setCurrentUser] = useState<PractitionerUser | null>(users[0]);
+  // Authentication State (Always requires login authentication upon entry)
+  const [currentUser, setCurrentUser] = useState<PractitionerUser | null>(null);
 
   // Patients & Appointments State - Loaded strictly from Excel Database
   const [patients, setPatients] = useState<Patient[]>(() => {
@@ -87,6 +87,33 @@ export function App() {
     setNotification(msg);
     setTimeout(() => setNotification(null), 4000);
   }, []);
+
+  // Inactivity / Idle Auto-Logout Timer (5 Minutes)
+  const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let timeoutId: number | undefined;
+
+    const resetTimer = () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => {
+        setCurrentUser(null);
+        showToast('⏱️ Session timed out due to inactivity. Please log in again.');
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'touchstart', 'scroll', 'click'];
+    events.forEach((evt) => window.addEventListener(evt, resetTimer, { passive: true }));
+
+    resetTimer();
+
+    return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
+      events.forEach((evt) => window.removeEventListener(evt, resetTimer));
+    };
+  }, [currentUser, showToast]);
 
   // Write directly into Excel file or trigger auto-download
   const syncToExcelStorage = useCallback(async (
