@@ -277,12 +277,19 @@ export function App() {
   };
 
   const handleBackToList = () => {
+    setIsScheduleViewActive(false);
     setMobileView('list');
   };
 
   const handleSelectSchedule = () => {
-    setIsScheduleViewActive(true);
-    setMobileView('details');
+    // If already on schedule in mobile, tapping Schedule again toggles back to list
+    if (isScheduleViewActive && mobileView === 'details') {
+      setIsScheduleViewActive(false);
+      setMobileView('list');
+    } else {
+      setIsScheduleViewActive(true);
+      setMobileView('details');
+    }
   };
 
   const handleAddPatient = (newPatient: Patient) => {
@@ -405,6 +412,7 @@ export function App() {
         onConnectLocalFile={handleConnectLocalFile}
         onDisconnectLocalFile={handleDisconnectLocalFile}
         onRestoreDefaultExcel={handleRestoreDefaultExcel}
+        onLogoClick={handleBackToList}
       />
 
       {/* MAIN CONTAINER: Responsive Layout */}
@@ -435,6 +443,7 @@ export function App() {
               appointments={appointments}
               onSelectPatient={handleSelectPatient}
               onOpenAddAppointment={handleOpenAddAppointment}
+              onBackToList={handleBackToList}
               currentUser={currentUser}
             />
           ) : selectedPatient ? (

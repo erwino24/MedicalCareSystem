@@ -9,7 +9,8 @@ import {
   HeartPulse,
   Plus,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  ArrowLeft
 } from 'lucide-react';
 
 interface ScheduleViewProps {
@@ -17,6 +18,7 @@ interface ScheduleViewProps {
   appointments: Appointment[];
   onSelectPatient: (patientId: string) => void;
   onOpenAddAppointment: (date?: string) => void;
+  onBackToList?: () => void;
   currentUser?: PractitionerUser;
 }
 
@@ -25,6 +27,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   appointments,
   onSelectPatient,
   onOpenAddAppointment,
+  onBackToList,
   currentUser,
 }) => {
   const today = format(new Date(), 'EEEE, MMMM d, yyyy');
@@ -37,7 +40,24 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   });
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 font-sans">
+    <div className="h-full flex flex-col bg-slate-50 overflow-y-auto font-sans">
+      {/* MOBILE ONLY STICKY BACK BUTTON (md:hidden) */}
+      {onBackToList && (
+        <div className="sticky top-0 z-30 bg-slate-900 text-white p-3 md:hidden shadow-md flex items-center justify-between shrink-0">
+          <button
+            onClick={onBackToList}
+            className="flex items-center space-x-2 text-xs sm:text-sm font-semibold hover:text-teal-300 transition active:scale-95 text-teal-400"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-white">← Back to Patient Directory</span>
+          </button>
+          <span className="text-[10px] bg-slate-800 text-teal-300 px-2 py-0.5 rounded border border-slate-700 font-medium">
+            Schedule View
+          </span>
+        </div>
+      )}
+
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
       {/* Welcome Banner with Action Button */}
       <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white rounded-2xl p-6 shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -245,6 +265,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
