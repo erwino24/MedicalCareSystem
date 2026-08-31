@@ -113,8 +113,170 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
         </div>
       )}
 
-      {/* CRITICAL RESPONSIVE REQUIREMENT: overflow-x-auto container */}
-      <div className="overflow-x-auto w-full">
+      {/* MOBILE ADAPTIVE VIEW (Shown on small screens < 768px) */}
+      <div className="block md:hidden p-4 space-y-4">
+        {/* Mobile New Entry Card */}
+        <div className="bg-teal-50/70 border-2 border-teal-200 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-1.5 font-bold text-teal-900 text-xs">
+              <Calendar className="w-4 h-4 text-teal-600" />
+              <span>Consultation for Today ({todayDate})</span>
+            </div>
+            <span className="text-[10px] bg-teal-100 text-teal-800 font-semibold px-2 py-0.5 rounded-full">
+              New Entry
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">BP</label>
+              <input
+                type="text"
+                placeholder="120/80"
+                value={bp}
+                onChange={(e) => setBp(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">Weight (kg)</label>
+              <input
+                type="number"
+                placeholder="65.0"
+                value={weightKg}
+                onChange={(e) => setWeightKg(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">FHR (bpm)</label>
+              <input
+                type="number"
+                placeholder="145"
+                value={fhrBpm}
+                onChange={(e) => setFhrBpm(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 font-semibold text-teal-800"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] text-slate-600 font-bold block mb-0.5">
+              {isNurse ? "Nurse Triage & Initial Assessment" : "Clinical Diagnosis / Assessment"} <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              rows={2}
+              placeholder={isNurse ? "Document patient symptoms & triage assessment..." : "Document clinical diagnosis & gestational findings..."}
+              value={diagnosis}
+              onChange={(e) => setDiagnosis(e.target.value)}
+              className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] text-slate-600 font-bold block mb-0.5">
+              {isNurse ? "Triage Notes / Vital Prep" : "Procedure, Treatment & Prescriptions"}
+            </label>
+            <textarea
+              rows={2}
+              placeholder={isNurse ? "Vitals recorded / Prep actions..." : "Enter procedure & prescriptions..."}
+              value={procedure}
+              onChange={(e) => setProcedure(e.target.value)}
+              className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 resize-none"
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">Next Follow-up</label>
+              <input
+                type="date"
+                value={followUpDate}
+                onChange={(e) => setFollowUpDate(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+            <div className="pt-4">
+              <button
+                onClick={handleSave}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-1.5 active:scale-95 text-xs shrink-0"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{isNurse ? 'Save Vitals' : 'Save Record'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Past Checkup Cards */}
+        <div className="space-y-2.5">
+          <h4 className="text-xs font-bold text-slate-700 flex items-center justify-between">
+            <span>Past Consultation History ({checkups.length})</span>
+          </h4>
+
+          {checkups.length === 0 ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-center text-slate-400">
+              <Clock className="w-6 h-6 mx-auto mb-1.5 text-slate-300" />
+              <p className="text-xs font-medium text-slate-600">No past check-ups</p>
+              <p className="text-[10px]">Record today's consultation above.</p>
+            </div>
+          ) : (
+            checkups.map((rec) => (
+              <div key={rec.id} className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                    <span className="font-bold text-slate-900 text-xs">{rec.date}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {rec.followUpDate && (
+                      <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">
+                        Follow-up: {rec.followUpDate}
+                      </span>
+                    )}
+                    {!isNurse && onDeleteCheckup && (
+                      <button
+                        onClick={() => onDeleteCheckup(rec.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-[11px]">
+                  {rec.bp && (
+                    <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200 font-medium">
+                      BP: <strong>{rec.bp}</strong>
+                    </span>
+                  )}
+                  {rec.weightKg && (
+                    <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+                      Wt: <strong>{rec.weightKg} kg</strong>
+                    </span>
+                  )}
+                  {rec.fhrBpm && (
+                    <span className="bg-teal-50 text-teal-800 px-2 py-0.5 rounded border border-teal-200 font-medium">
+                      FHR: <strong>{rec.fhrBpm} bpm</strong>
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-xs space-y-1">
+                  <p className="font-semibold text-slate-800">{rec.diagnosis}</p>
+                  {rec.procedure && <p className="text-slate-600 text-[11px]">{rec.procedure}</p>}
+                  {rec.notes && <p className="text-slate-400 text-[10px] italic">Notes: {rec.notes}</p>}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* DESKTOP TABLE VIEW (Shown on screens >= 768px) */}
+      <div className="hidden md:block overflow-x-auto w-full">
         <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[760px]">
           <thead className="bg-slate-100/80 text-slate-600 font-semibold border-b border-slate-200">
             <tr>
@@ -138,7 +300,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
               </td>
 
               <td className="py-3 px-3 align-top space-y-1.5">
-                <div className="grid grid-cols-2 gap-1">
+                <div>
                   <input
                     type="text"
                     placeholder="BP (e.g. 120/80)"
@@ -146,37 +308,40 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                     onChange={(e) => setBp(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
                   />
+                </div>
+                <div>
                   <input
                     type="number"
-                    step="0.1"
-                    placeholder="Wt (kg)"
+                    placeholder="Weight (kg)"
                     value={weightKg}
                     onChange={(e) => setWeightKg(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
                   />
                 </div>
-                <input
-                  type="number"
-                  placeholder="FHR (bpm e.g. 145)"
-                  value={fhrBpm}
-                  onChange={(e) => setFhrBpm(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-                />
+                <div>
+                  <input
+                    type="number"
+                    placeholder="FHR (bpm)"
+                    value={fhrBpm}
+                    onChange={(e) => setFhrBpm(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold text-teal-800 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
               </td>
 
-              <td className="py-3 px-3 align-top space-y-1">
+              <td className="py-3 px-3 align-top">
                 <textarea
-                  rows={2}
-                  placeholder={isNurse ? "Triage observations / Chief complaints..." : "Enter diagnosis details..."}
+                  rows={3}
+                  placeholder={isNurse ? "Nurse triage & initial assessment..." : "Enter clinical diagnosis / assessment findings..."}
                   value={diagnosis}
                   onChange={(e) => setDiagnosis(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500 resize-none"
+                  className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500 resize-none font-medium"
                 />
               </td>
 
-              <td className="py-3 px-3 align-top space-y-1">
+              <td className="py-3 px-3 align-top">
                 <textarea
-                  rows={2}
+                  rows={3}
                   placeholder={isNurse ? "Vitals recorded / Prep actions..." : "Enter procedure & prescriptions..."}
                   value={procedure}
                   onChange={(e) => setProcedure(e.target.value)}

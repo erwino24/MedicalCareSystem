@@ -81,18 +81,20 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="bg-white border-b border-slate-200 shrink-0 shadow-xs z-30 relative font-sans">
       <div className="px-4 py-2.5 sm:px-6 flex items-center justify-between">
         {/* Brand & Logo */}
-        <div className="flex items-center space-x-3">
-          <div className="bg-gradient-to-tr from-teal-600 to-cyan-500 text-white p-2.5 rounded-xl shadow-sm flex items-center justify-center">
-            <HeartPulse className="w-6 h-6 animate-pulse" />
+        <div className="flex items-center space-x-2.5 sm:space-x-3">
+          <div className="bg-gradient-to-tr from-teal-600 to-cyan-500 text-white p-2 rounded-xl sm:p-2.5 shadow-sm flex items-center justify-center shrink-0">
+            <HeartPulse className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-lg font-bold text-slate-800 tracking-tight">MaternalCare OB-GYN</h1>
-              <span className="bg-teal-50 text-teal-700 text-xs font-semibold px-2 py-0.5 rounded-full border border-teal-200">
+              <h1 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight whitespace-nowrap">
+                MaternalCare <span className="text-teal-700 font-extrabold">OB-GYN</span>
+              </h1>
+              <span className="bg-teal-50 text-teal-700 text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border border-teal-200 hidden lg:inline-flex">
                 Excel Database Ready
               </span>
             </div>
-            <p className="text-xs text-slate-500 hidden sm:block">
+            <p className="text-[11px] text-slate-500 hidden md:block">
               Obstetrics & Gynecology Patient Management System
             </p>
           </div>
