@@ -30,6 +30,7 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
   const [newFullName, setNewFullName] = useState<string>('');
   const [newAge, setNewAge] = useState<number>(26);
   const [newContactNumber, setNewContactNumber] = useState<string>('');
+  const [newAddress, setNewAddress] = useState<string>('');
   const [newLmp, setNewLmp] = useState<string>(todayStr);
 
   // Common Appointment Details
@@ -70,7 +71,7 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
         age: Number(newAge) || 25,
         contactNumber: newContactNumber.trim() || 'N/A',
         email: 'N/A',
-        address: 'N/A',
+        address: newAddress.trim() || 'N/A',
         emergencyContact: 'N/A',
         bloodType: 'O+',
         gravida: 1,
@@ -99,6 +100,7 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
     // Reset Form
     setNewFullName('');
     setNewContactNumber('');
+    setNewAddress('');
     setNotes('');
   };
 
@@ -207,6 +209,16 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
                     className="w-full bg-white border border-teal-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">Home Address / Location</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 123 Quezon Ave, Barangay San Jose"
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  className="w-full bg-white border border-teal-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500"
+                />
               </div>
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">LMP (Last Menstrual Period)</label>
