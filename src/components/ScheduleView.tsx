@@ -16,7 +16,8 @@ import {
   CalendarCheck,
   Stethoscope,
   Filter,
-  Check
+  Check,
+  MessageSquare
 } from 'lucide-react';
 
 interface ScheduleViewProps {
@@ -465,7 +466,32 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                         </button>
 
                         {/* Tag Done / Status Actions */}
-                        <div className="flex items-center space-x-1.5 shrink-0">
+                        <div className="flex items-center space-x-1.5 shrink-0 flex-wrap gap-y-1">
+                          {/* 1-Click Patient Reminder */}
+                          {apt.status === 'Scheduled' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const patient = patients.find((p) => p.id === apt.patientId);
+                                const phone = patient?.contactNumber || '';
+                                const msg = `Hello ${apt.patientName}, this is a friendly reminder from MaternalCare OB-GYN for your scheduled ${apt.type} on ${apt.date} at ${apt.time}. Please bring your previous lab/ultrasound records. See you soon!`;
+                                const cleanPhone = phone.replace(/[^0-9]/g, '');
+                                if (cleanPhone) {
+                                  const waNumber = cleanPhone.startsWith('0') ? '63' + cleanPhone.substring(1) : cleanPhone;
+                                  window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+                                } else {
+                                  navigator.clipboard.writeText(msg);
+                                  alert(`Copied reminder for ${apt.patientName} to clipboard:\n\n${msg}`);
+                                }
+                              }}
+                              className="bg-white hover:bg-teal-50 text-teal-800 border border-teal-300 font-semibold text-[11px] px-2 py-1 rounded-lg transition shadow-2xs flex items-center space-x-1 cursor-pointer active:scale-95"
+                              title="Send 1-Click WhatsApp / SMS Reminder"
+                            >
+                              <MessageSquare className="w-3 h-3 text-teal-600" />
+                              <span>Remind</span>
+                            </button>
+                          )}
+
                           {apt.status === 'Scheduled' ? (
                             <>
                               {onUpdateAppointmentStatus && (

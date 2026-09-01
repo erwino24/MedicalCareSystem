@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Patient, Appointment, CheckupRecord, PrescriptionItem, PractitionerUser } from '../types/patient';
 import { calculateObGynMetrics } from '../utils/obgynCalculator';
+import { format } from 'date-fns';
 import { CheckupTable } from './CheckupTable';
 import { PrescriptionModal } from './PrescriptionModal';
 import {
@@ -21,7 +22,8 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
-  EyeOff
+  EyeOff,
+  MessageSquare
 } from 'lucide-react';
 
 interface PatientDetailsProps {
@@ -710,7 +712,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
           )}
         </div>
 
-        {/* ACTIVE SCHEDULED CONSULTATIONS BANNER WITH 1-CLICK TAG DONE */}
+        {/* ACTIVE SCHEDULED CONSULTATIONS BANNER WITH 1-CLICK TAG DONE & REMINDERS */}
         {appointments.filter((a) => a.patientId === patient.id && a.status === 'Scheduled').map((apt) => (
           <div
             key={apt.id}
@@ -734,16 +736,38 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
               </div>
             </div>
 
-            {onUpdateAppointmentStatus && (
+            <div className="flex items-center space-x-2 shrink-0 self-start sm:self-auto flex-wrap gap-y-2">
+              {/* 1-Click Patient Reminder (WhatsApp / SMS) */}
               <button
-                onClick={() => onUpdateAppointmentStatus(apt.id, 'Completed')}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs flex items-center space-x-1.5 shrink-0 self-start sm:self-auto cursor-pointer active:scale-95"
-                title="Mark this consultation booking as Completed / Done"
+                onClick={() => {
+                  const msg = `Hello ${patient.fullName}, this is a friendly reminder from MaternalCare OB-GYN for your scheduled ${apt.type} on ${apt.date} at ${apt.time}. Please bring your previous ultrasound and lab results. See you soon!`;
+                  const cleanPhone = (patient.contactNumber || '').replace(/[^0-9]/g, '');
+                  if (cleanPhone) {
+                    const waNumber = cleanPhone.startsWith('0') ? '63' + cleanPhone.substring(1) : cleanPhone;
+                    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank');
+                  } else {
+                    navigator.clipboard.writeText(msg);
+                    alert(`Copied reminder to clipboard:\n\n${msg}`);
+                  }
+                }}
+                className="bg-white hover:bg-teal-50 text-teal-800 border border-teal-300 font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-2xs flex items-center space-x-1.5 cursor-pointer active:scale-95"
+                title={`Send WhatsApp/SMS reminder to ${patient.fullName} (${patient.contactNumber})`}
               >
-                <Check className="w-4 h-4 stroke-[3]" />
-                <span>✓ Tag Consultation Done</span>
+                <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+                <span>Send Reminder</span>
               </button>
-            )}
+
+              {onUpdateAppointmentStatus && (
+                <button
+                  onClick={() => onUpdateAppointmentStatus(apt.id, 'Completed')}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs flex items-center space-x-1.5 cursor-pointer active:scale-95"
+                  title="Mark this consultation booking as Completed / Done"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>✓ Tag Consultation Done</span>
+                </button>
+              )}
+            </div>
           </div>
         ))}
 
@@ -754,6 +778,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
           onDeleteCheckup={handleDeleteCheckup}
           currentUserRole={currentUserRole}
           onOpenPrescription={handleOpenPrescriptionModal}
+          defaultDate={appointments.find((a) => a.patientId === patient.id && a.status === 'Scheduled')?.date || format(new Date(), 'yyyy-MM-dd')}
         />
       </div>
 

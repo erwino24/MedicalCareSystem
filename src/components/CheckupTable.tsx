@@ -9,6 +9,7 @@ interface CheckupTableProps {
   onDeleteCheckup?: (checkupId: string) => void;
   currentUserRole?: 'DOCTOR' | 'NURSE';
   onOpenPrescription?: (checkup?: CheckupRecord) => void;
+  defaultDate?: string;
 }
 
 export const CheckupTable: React.FC<CheckupTableProps> = ({
@@ -17,11 +18,13 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   onDeleteCheckup,
   currentUserRole = 'DOCTOR',
   onOpenPrescription,
+  defaultDate,
 }) => {
   const isNurse = currentUserRole === 'NURSE';
   const todayDate = format(new Date(), 'yyyy-MM-dd');
 
   // Input Row 1 State
+  const [checkupDate, setCheckupDate] = useState<string>(defaultDate || todayDate);
   const [weightKg, setWeightKg] = useState<string>('');
   const [bp, setBp] = useState<string>('');
   const [fhrBpm, setFhrBpm] = useState<string>('');
@@ -31,6 +34,12 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (defaultDate) {
+      setCheckupDate(defaultDate);
+    }
+  }, [defaultDate]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +57,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
 
     setErrorMsg('');
     onAddCheckup({
-      date: todayDate,
+      date: checkupDate || todayDate,
       weightKg: weightKg ? parseFloat(weightKg) : undefined,
       bp: bp || undefined,
       fhrBpm: fhrBpm ? parseInt(fhrBpm, 10) : undefined,
@@ -131,14 +140,17 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
       <div className="block md:hidden p-4 space-y-4">
         {/* Mobile New Entry Card */}
         <div className="bg-teal-50/70 border-2 border-teal-200 rounded-2xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center space-x-1.5 font-bold text-teal-900 text-xs">
-              <Calendar className="w-4 h-4 text-teal-600" />
-              <span>Consultation for Today ({todayDate})</span>
+              <Calendar className="w-4 h-4 text-teal-600 shrink-0" />
+              <span>Consultation Date:</span>
             </div>
-            <span className="text-[10px] bg-teal-100 text-teal-800 font-semibold px-2 py-0.5 rounded-full">
-              New Entry
-            </span>
+            <input
+              type="date"
+              value={checkupDate}
+              onChange={(e) => setCheckupDate(e.target.value)}
+              className="bg-white border border-teal-300 rounded-lg px-2 py-1 text-xs font-bold text-teal-900 focus:ring-2 focus:ring-teal-500 shadow-2xs"
+            />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -319,14 +331,18 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {/* ROW 1: LOCKED INPUT ROW FOR TODAY'S CHECK-UP */}
+              {/* ROW 1: INPUT ROW FOR CHECK-UP ENTRY */}
               <tr className="bg-teal-50/50 border-b-2 border-teal-200/80">
                 <td className="py-3 px-4 align-top">
-                  <div className="flex items-center space-x-1.5 font-bold text-teal-800 bg-white border border-teal-300 rounded px-2.5 py-1.5 shadow-2xs">
-                    <Calendar className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                    <span>{todayDate}</span>
-                  </div>
-                  <span className="text-[10px] text-teal-600 font-semibold block mt-1">Today (Locked)</span>
+                  <input
+                    type="date"
+                    value={checkupDate}
+                    onChange={(e) => setCheckupDate(e.target.value)}
+                    className="w-full bg-white border border-teal-300 rounded-lg px-2 py-1.5 text-xs font-bold text-teal-900 focus:ring-2 focus:ring-teal-500 shadow-2xs cursor-pointer"
+                  />
+                  <span className="text-[10px] text-teal-600 font-semibold block mt-1">
+                    {checkupDate === todayDate ? '🟢 Today' : '📅 Consult Date'}
+                  </span>
                 </td>
 
                 <td className="py-3 px-3 align-top space-y-1.5">
