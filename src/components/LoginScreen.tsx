@@ -100,13 +100,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ users, onLoginSuccess,
   };
 
   return (
-    <div className="min-h-screen w-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden font-sans">
-      {/* Dynamic Background Glows */}
+    <div
+      className="min-h-screen w-screen flex items-center justify-center p-4 relative overflow-hidden font-sans bg-slate-900 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/bg.jpg'), url('/bg.jfif')" }}
+    >
+      {/* Soft gradient & frosted backdrop overlay for readability */}
+      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] pointer-events-none" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main Card */}
-      <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/80 shadow-2xl p-6 sm:p-8 relative z-10 space-y-6 animate-in fade-in zoom-in-95 duration-200">
+      {/* Main Card with elegant glassmorphism shadow */}
+      <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-3xl border border-white/80 shadow-[0_25px_60px_rgba(15,23,42,0.35)] p-6 sm:p-8 relative z-10 space-y-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Branding Header */}
         <div className="text-center space-y-2">
           <div className="w-16 h-16 bg-gradient-to-tr from-teal-600 to-cyan-500 text-white rounded-2xl mx-auto shadow-lg flex items-center justify-center">
