@@ -1,36 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
-  <!-- Background Circle -->
-  <circle cx="100" cy="100" r="95" fill="#5db3b6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 125 125" width="100%" height="100%">
+  <defs>
+    <!-- Teal Folder Gradient -->
+    <linearGradient id="folderGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3DD1B4" /> 
+      <stop offset="100%" stop-color="#0C9D8F" /> 
+    </linearGradient>
+    
+    <!-- Soft Drop Shadow -->
+    <filter id="softShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#001F1C" flood-opacity="0.15"/>
+    </filter>
 
-  <g fill="none" stroke="#c5e8e6" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <filter id="cardShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#001F1C" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Main Folder Background -->
+  <path d="M 12 24 C 12 17 17 12 24 12 L 44 12 C 48 12 51 14 53 17 L 57 23 C 58.5 25 61 26 64 26 L 98 26 C 105 26 110 31 110 38 L 110 102 C 110 109 105 114 98 114 L 24 114 C 17 114 12 109 12 102 Z" 
+        fill="url(#folderGradient)" 
+        filter="url(#softShadow)" />
+
+  <!-- Background Icon: Medical Cross (Top Right) -->
+  <g fill="#ffffff" opacity="0.15">
+    <rect x="88" y="36" width="7" height="21" rx="1.5" />
+    <rect x="81" y="43" width="21" height="7" rx="1.5" />
+  </g>
+
+  <!-- Background Icon: Heart & ECG (Top Left) -->
+  <g fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.2">
+    <!-- Heart Shape -->
+    <path d="M 33 46 L 27 40 C 24 37 24 32 27 29 C 30 26 35 26 33 30 L 33 30 C 31 26 36 26 39 29 C 42 32 42 37 39 40 Z" fill="#ffffff" stroke="none" opacity="0.8"/>
+    <!-- Pulse Line -->
+    <path d="M 22 36 L 27 36 L 30 30 L 34 42 L 37 36 L 44 36" />
+  </g>
+
+  <!-- Background Icon: Maternity / OB-GYN Silhouette (Center) -->
+  <g fill="#ffffff" opacity="0.15">
+    <circle cx="58" cy="30" r="4.5" />
+    <path d="M 59 36 C 53 38 48 48 53 58 C 57 65 65 62 65 56 C 65 50 63 46 61 41 C 60 38 60 37 59 36 Z" />
+    <circle cx="57" cy="51" r="3.5" fill="#15A698" /> <!-- Inner detail cutout effect -->
+  </g>
+
+  <!-- Background Icon: Leaf (Bottom Left Edge) -->
+  <path d="M 12 60 C 25 60 32 75 25 85 C 15 80 12 70 12 60 Z" fill="#ffffff" opacity="0.1" />
+
+  <!-- Front White Clinical Card -->
+  <rect x="23" y="52" width="88" height="63" rx="8" fill="#ffffff" filter="url(#cardShadow)" />
+
+  <!-- Card UI Placeholder Lines (Light Mint) -->
+  <g fill="#C4EBE4">
+    <rect x="33" y="66" width="38" height="6" rx="3" />
+    <rect x="33" y="78" width="38" height="6" rx="3" />
     
-    <!-- Woman's Outer Hair and Back -->
-    <path d="M 75 45 C 55 55, 55 85, 65 100" />
+    <rect x="33" y="90" width="16" height="6" rx="3" />
+    <rect x="53" y="90" width="14" height="6" rx="3" />
     
-    <!-- Woman's Face, Neck, and Arm -->
-    <path d="M 68 95 C 65 75, 75 55, 95 55 C 110 55, 115 65, 105 75 C 100 80, 95 85, 95 85 C 90 90, 80 85, 80 95 C 80 100, 85 105, 95 105" />
-    
-    <!-- Lower Back and Leg Silhouette -->
-    <path d="M 65 110 C 70 135, 75 155, 65 175" />
-    
-    <!-- Pregnant Belly Curve -->
-    <path d="M 125 115 C 145 130, 140 160, 120 175 C 110 180, 95 180, 95 180" />
-    
-    <!-- Medical Staff (Rod of Asclepius) -->
-    <line x1="100" y1="90" x2="100" y2="180" />
-    <circle cx="100" cy="90" r="2.5" fill="#c5e8e6" stroke="none" />
-    
-    <!-- Center Heart -->
-    <path d="M 100 115 C 90 105, 75 115, 85 130 C 95 145, 100 150, 100 150 C 100 150, 105 145, 115 130 C 125 115, 110 105, 100 115 Z" />
-    
-    <!-- Snake Upper Coil -->
-    <path d="M 130 95 C 120 90, 110 90, 105 95 C 95 105, 115 110, 115 120 C 115 130, 105 135, 105 135" />
-    
-    <!-- Snake Lower Coil -->
-    <path d="M 95 155 C 85 160, 85 170, 95 175 C 105 180, 115 175, 110 165" />
-    
-    <!-- Snake Eye -->
-    <circle cx="122" cy="94" r="1.5" fill="#c5e8e6" stroke="none" />
-    
+    <rect x="33" y="102" width="22" height="6" rx="3" />
+  </g>
+
+  <!-- Prominent Medical Cross on Card (Deep Teal) -->
+  <g fill="#00A89C">
+    <rect x="75" y="80" width="22" height="8" rx="2" />
+    <rect x="82" y="73" width="8" height="22" rx="2" />
   </g>
 </svg>
