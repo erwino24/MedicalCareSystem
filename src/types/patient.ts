@@ -32,7 +32,10 @@ export interface Patient {
   contactNumber: string;
   email: string;
   address: string;
-  emergencyContact: string;
+  emergencyContact: string; // Combined fallback
+  emergencyContactName?: string;
+  emergencyContactNumber?: string;
+  emergencyContactAddress?: string;
   bloodType: string;
   gravida: number; // G - Number of pregnancies
   para: number;    // P - Number of births

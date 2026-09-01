@@ -55,7 +55,17 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
   const [contactNumber, setContactNumber] = useState(patient.contactNumber);
   const [email, setEmail] = useState(patient.email);
   const [address, setAddress] = useState(patient.address);
-  const [emergencyContact, setEmergencyContact] = useState(patient.emergencyContact);
+  const [emergencyContactName, setEmergencyContactName] = useState(
+    patient.emergencyContactName ||
+    (patient.emergencyContact?.includes('-') ? patient.emergencyContact.split('-')[0].trim() : patient.emergencyContact || '')
+  );
+  const [emergencyContactNumber, setEmergencyContactNumber] = useState(
+    patient.emergencyContactNumber ||
+    (patient.emergencyContact?.includes('-') ? patient.emergencyContact.split('-')[1].trim() : '')
+  );
+  const [emergencyContactAddress, setEmergencyContactAddress] = useState(
+    patient.emergencyContactAddress || ''
+  );
   const [bloodType, setBloodType] = useState(patient.bloodType);
   const [gravida, setGravida] = useState(patient.gravida);
   const [para, setPara] = useState(patient.para);
@@ -74,13 +84,22 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
     setContactNumber(patient.contactNumber);
     setEmail(patient.email);
     setAddress(patient.address);
-    setEmergencyContact(patient.emergencyContact);
+    setEmergencyContactName(
+      patient.emergencyContactName ||
+      (patient.emergencyContact?.includes('-') ? patient.emergencyContact.split('-')[0].trim() : patient.emergencyContact || '')
+    );
+    setEmergencyContactNumber(
+      patient.emergencyContactNumber ||
+      (patient.emergencyContact?.includes('-') ? patient.emergencyContact.split('-')[1].trim() : '')
+    );
+    setEmergencyContactAddress(patient.emergencyContactAddress || '');
     setBloodType(patient.bloodType);
     setGravida(patient.gravida);
     setPara(patient.para);
     setLmp(patient.lmp);
     setIllnessHistory(patient.illnessHistory);
     setAllergies(patient.allergies || '');
+    setStatus(patient.status || 'Active');
     setIsEditing(true);
   };
 
@@ -90,6 +109,10 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
+    const formattedEmergency = emergencyContactName.trim() && emergencyContactNumber.trim()
+      ? `${emergencyContactName.trim()} - ${emergencyContactNumber.trim()}`
+      : emergencyContactName.trim() || emergencyContactNumber.trim() || 'N/A';
+
     onUpdatePatient({
       ...patient,
       fullName,
@@ -97,7 +120,10 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
       contactNumber,
       email,
       address,
-      emergencyContact,
+      emergencyContact: formattedEmergency,
+      emergencyContactName: emergencyContactName.trim() || undefined,
+      emergencyContactNumber: emergencyContactNumber.trim() || undefined,
+      emergencyContactAddress: emergencyContactAddress.trim() || undefined,
       bloodType,
       gravida: Number(gravida),
       para: Number(para),
@@ -345,14 +371,53 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                 />
               </div>
 
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">Emergency Contact</label>
-                <input
-                  type="text"
-                  value={emergencyContact}
-                  onChange={(e) => setEmergencyContact(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500"
-                />
+              {/* Emergency Contact Form Group */}
+              <div className="sm:col-span-2 lg:col-span-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                <span className="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Emergency Contact Details</span>
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">
+                      Contact Person Name & Relationship
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Juan Cruz (Husband)"
+                      value={emergencyContactName}
+                      onChange={(e) => setEmergencyContactName(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">
+                      Emergency Phone Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. +63 918 222 3456"
+                      value={emergencyContactNumber}
+                      onChange={(e) => setEmergencyContactNumber(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <label className="font-semibold text-slate-700 block mb-1">
+                      Emergency Contact Address
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Same as patient or specific residence"
+                      value={emergencyContactAddress}
+                      onChange={(e) => setEmergencyContactAddress(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -440,7 +505,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
                     <Phone className="w-3 h-3 text-slate-400" />
-                    <span>Contact</span>
+                    <span>Contact Info</span>
                   </span>
                   <p className="font-semibold text-slate-800">{patient.contactNumber}</p>
                   <p className="text-[11px] text-slate-500 truncate">{patient.email}</p>
@@ -448,10 +513,24 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
 
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
-                    <ShieldAlert className="w-3 h-3 text-slate-400" />
+                    <ShieldAlert className="w-3 h-3 text-rose-500" />
                     <span>Emergency Contact</span>
                   </span>
-                  <p className="font-medium text-slate-800">{patient.emergencyContact}</p>
+                  <p className="font-semibold text-slate-800 truncate">
+                    {patient.emergencyContactName || (patient.emergencyContact?.includes('-') ? patient.emergencyContact.split('-')[0].trim() : patient.emergencyContact || 'None')}
+                  </p>
+                  {(patient.emergencyContactNumber || (patient.emergencyContact?.includes('-') && patient.emergencyContact.split('-')[1]?.trim())) && (
+                    <p className="text-[11px] text-teal-700 font-medium mt-0.5 flex items-center space-x-1 truncate">
+                      <Phone className="w-3 h-3 shrink-0 text-teal-600" />
+                      <span>{patient.emergencyContactNumber || patient.emergencyContact.split('-')[1]?.trim()}</span>
+                    </p>
+                  )}
+                  {patient.emergencyContactAddress && (
+                    <p className="text-[10px] text-slate-500 mt-0.5 flex items-start space-x-1 truncate" title={patient.emergencyContactAddress}>
+                      <MapPin className="w-3 h-3 shrink-0 text-slate-400 mt-0.5" />
+                      <span className="truncate">{patient.emergencyContactAddress}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">

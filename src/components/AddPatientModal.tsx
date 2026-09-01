@@ -19,7 +19,9 @@ export const AddPatientModal: React.FC<AddPatientModalProps> = ({
   const [contactNumber, setContactNumber] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
-  const [emergencyContact, setEmergencyContact] = useState('');
+  const [emergencyContactName, setEmergencyContactName] = useState('');
+  const [emergencyContactNumber, setEmergencyContactNumber] = useState('');
+  const [emergencyContactAddress, setEmergencyContactAddress] = useState('');
   const [bloodType, setBloodType] = useState('O+');
   const [gravida, setGravida] = useState<number>(1);
   const [para, setPara] = useState<number>(0);
@@ -33,6 +35,10 @@ export const AddPatientModal: React.FC<AddPatientModalProps> = ({
     e.preventDefault();
     if (!fullName.trim()) return;
 
+    const formattedEmergency = emergencyContactName.trim() && emergencyContactNumber.trim()
+      ? `${emergencyContactName.trim()} - ${emergencyContactNumber.trim()}`
+      : emergencyContactName.trim() || emergencyContactNumber.trim() || 'N/A';
+
     const newPatient: Patient = {
       id: `pat-${Date.now()}`,
       fullName: fullName.trim(),
@@ -40,13 +46,17 @@ export const AddPatientModal: React.FC<AddPatientModalProps> = ({
       contactNumber: contactNumber.trim() || 'N/A',
       email: email.trim() || 'N/A',
       address: address.trim() || 'N/A',
-      emergencyContact: emergencyContact.trim() || 'N/A',
+      emergencyContact: formattedEmergency,
+      emergencyContactName: emergencyContactName.trim() || undefined,
+      emergencyContactNumber: emergencyContactNumber.trim() || undefined,
+      emergencyContactAddress: emergencyContactAddress.trim() || undefined,
       bloodType,
       gravida: Number(gravida),
       para: Number(para),
       lmp,
       illnessHistory: illnessHistory.trim() || 'No relevant medical history reported.',
       allergies: allergies.trim() || undefined,
+      status: 'Active',
       checkups: [],
     };
 
@@ -59,7 +69,9 @@ export const AddPatientModal: React.FC<AddPatientModalProps> = ({
     setContactNumber('');
     setEmail('');
     setAddress('');
-    setEmergencyContact('');
+    setEmergencyContactName('');
+    setEmergencyContactNumber('');
+    setEmergencyContactAddress('');
     setBloodType('O+');
     setGravida(1);
     setPara(0);
@@ -154,29 +166,55 @@ export const AddPatientModal: React.FC<AddPatientModalProps> = ({
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="font-semibold text-slate-700 block mb-1">Complete Address</label>
-              <input
-                type="text"
-                placeholder="House No., Street, Barangay, City"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 focus:bg-white"
-              />
+            {/* Emergency Contact Group */}
+            <div className="sm:col-span-2 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200 space-y-3">
+              <span className="font-bold text-slate-800 text-xs flex items-center space-x-1.5">
+                <span>🛡️ Emergency Contact Person & Details</span>
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Contact Person Name & Relationship
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Juan Cruz (Husband)"
+                    value={emergencyContactName}
+                    onChange={(e) => setEmergencyContactName(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Emergency Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +63 918 222 3456"
+                    value={emergencyContactNumber}
+                    onChange={(e) => setEmergencyContactNumber(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="font-semibold text-slate-700 block mb-1">
+                    Emergency Contact Address
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Same as patient or specific residence / barangay"
+                    value={emergencyContactAddress}
+                    onChange={(e) => setEmergencyContactAddress(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Emergency Contact & Phone</label>
-              <input
-                type="text"
-                placeholder="Name & Relationship (Phone)"
-                value={emergencyContact}
-                onChange={(e) => setEmergencyContact(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 focus:bg-white"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:col-span-2">
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">Gravida (G)</label>
                 <input
