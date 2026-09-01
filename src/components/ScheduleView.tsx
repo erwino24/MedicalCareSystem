@@ -233,6 +233,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 const isToday = dayStr === todayIso;
                 const isSelected = selectedDateFilter === dayStr;
 
+                const scheduledCount = dayAppointments.filter((a) => a.status === 'Scheduled').length;
+                const completedCount = dayAppointments.filter((a) => a.status === 'Completed').length;
+                const hasPendingScheduled = scheduledCount > 0;
+                const isAllCompleted = dayAppointments.length > 0 && scheduledCount === 0;
+
                 return (
                   <div
                     key={dayStr}
@@ -244,8 +249,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                         ? 'bg-teal-50 border-teal-500 ring-2 ring-teal-500 shadow-sm'
                         : isToday
                         ? 'bg-teal-600 text-white border-teal-700 font-bold shadow-xs'
-                        : dayAppointments.length > 0
-                        ? 'bg-cyan-50/70 border-cyan-200 text-slate-800 hover:bg-cyan-100/70'
+                        : hasPendingScheduled
+                        ? 'bg-amber-50/70 border-amber-300 text-slate-800 hover:bg-amber-100/80 shadow-2xs'
+                        : isAllCompleted
+                        ? 'bg-emerald-50/70 border-emerald-300 text-slate-800 hover:bg-emerald-100/80 shadow-2xs'
                         : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'
                     }`}
                     title={`Click to view consultations for ${dayStr}`}
@@ -255,32 +262,59 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                         {day}
                       </span>
                       {dayAppointments.length > 0 && (
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shadow-2xs ${
-                            isToday
-                              ? 'bg-white text-teal-900'
-                              : 'bg-teal-600 text-white'
-                          }`}
-                        >
-                          {dayAppointments.length}
-                        </span>
+                        <div className="flex items-center space-x-0.5">
+                          {scheduledCount > 0 && (
+                            <span
+                              className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold shadow-2xs ${
+                                isToday ? 'bg-amber-500 text-white' : 'bg-amber-500 text-white'
+                              }`}
+                              title={`${scheduledCount} Pending / Not Done`}
+                            >
+                              {scheduledCount}
+                            </span>
+                          )}
+                          {completedCount > 0 && (
+                            <span
+                              className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold shadow-2xs ${
+                                isToday ? 'bg-emerald-400 text-teal-950' : 'bg-emerald-600 text-white'
+                              }`}
+                              title={`${completedCount} Completed / Done`}
+                            >
+                              ✓{completedCount}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
 
                     <div className="space-y-0.5 overflow-hidden">
-                      {dayAppointments.slice(0, 2).map((apt) => (
-                        <span
-                          key={apt.id}
-                          className={`text-[9px] px-1 py-0.5 rounded block truncate font-medium ${
-                            isToday
-                              ? 'bg-teal-800 text-teal-100'
-                              : 'bg-teal-100 text-teal-900'
-                          }`}
-                          title={`${apt.patientName} (${apt.time})`}
-                        >
-                          {apt.patientName.split(' ')[0]} ({apt.time})
-                        </span>
-                      ))}
+                      {dayAppointments.slice(0, 2).map((apt) => {
+                        const isDone = apt.status === 'Completed';
+                        const isCancelled = apt.status === 'Cancelled';
+
+                        return (
+                          <span
+                            key={apt.id}
+                            className={`text-[9px] px-1 py-0.5 rounded block truncate font-medium border ${
+                              isToday
+                                ? isDone
+                                  ? 'bg-emerald-800 text-emerald-100 border-emerald-600 font-semibold'
+                                  : isCancelled
+                                  ? 'bg-rose-900/60 text-rose-200 border-rose-700 line-through'
+                                  : 'bg-amber-500 text-white border-amber-600 font-bold'
+                                : isDone
+                                ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold'
+                                : isCancelled
+                                ? 'bg-rose-50 text-rose-700 border-rose-200 line-through'
+                                : 'bg-amber-100 text-amber-950 border-amber-300 font-bold'
+                            }`}
+                            title={`${apt.patientName} (${apt.time}) - ${apt.status}`}
+                          >
+                            {isDone ? '✓ ' : isCancelled ? '✕ ' : '⏳ '}
+                            {apt.patientName.split(' ')[0]} ({apt.time})
+                          </span>
+                        );
+                      })}
                       {dayAppointments.length > 2 && (
                         <span className={`text-[9px] block font-semibold ${isToday ? 'text-teal-200' : 'text-slate-500'}`}>
                           + {dayAppointments.length - 2} more
@@ -292,23 +326,27 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               })}
             </div>
 
-            {/* Quick helper legend */}
-            <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 flex-wrap gap-2">
-              <div className="flex items-center space-x-3">
+            {/* Quick helper legend with Green (Done) & Orange (Not Done) */}
+            <div className="pt-2.5 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 flex-wrap gap-2">
+              <div className="flex items-center space-x-3 flex-wrap gap-y-1">
+                <span className="flex items-center space-x-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span className="font-semibold text-emerald-800">Done / Completed</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <span className="font-semibold text-amber-800">Pending / Not Done</span>
+                </span>
                 <span className="flex items-center space-x-1">
                   <span className="w-2.5 h-2.5 rounded bg-teal-600" />
                   <span>Today</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <span className="w-2.5 h-2.5 rounded bg-cyan-100 border border-cyan-300" />
-                  <span>Has Bookings</span>
                 </span>
                 <span className="flex items-center space-x-1">
                   <span className="w-2.5 h-2.5 rounded border-2 border-teal-500 bg-teal-50" />
                   <span>Selected</span>
                 </span>
               </div>
-              <span className="text-slate-400 italic">Click any date to filter appointments list</span>
+              <span className="text-slate-400 italic">Click any date to filter list</span>
             </div>
           </div>
 
@@ -365,98 +403,117 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   </p>
                 </div>
               ) : (
-                displayedAppointments.map((apt) => (
-                  <div
-                    key={apt.id}
-                    className="p-4 bg-slate-50/90 hover:bg-teal-50/40 border border-slate-200/90 hover:border-teal-300 rounded-xl transition shadow-2xs space-y-2.5"
-                  >
-                    {/* Row 1: Patient Name & Time Badge */}
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                        {apt.patientName}
-                      </h4>
-                      <span className="text-[11px] bg-teal-100 text-teal-900 font-bold px-2.5 py-0.5 rounded-full border border-teal-200 shrink-0 flex items-center space-x-1">
-                        <Clock className="w-3 h-3 text-teal-700" />
-                        <span>{apt.time}</span>
-                      </span>
-                    </div>
+                displayedAppointments.map((apt) => {
+                  const isDone = apt.status === 'Completed';
+                  const isCancelled = apt.status === 'Cancelled';
 
-                    {/* Row 2: Visit Type Tag & Date */}
-                    <div className="flex items-center space-x-2 text-xs text-slate-600 flex-wrap gap-y-1">
-                      <span className="bg-white border border-slate-200 text-teal-800 font-semibold px-2 py-0.5 rounded-md flex items-center space-x-1">
-                        <Stethoscope className="w-3 h-3 text-teal-600" />
-                        <span>{apt.type}</span>
-                      </span>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-slate-600 font-medium">{apt.date}</span>
-                    </div>
+                  return (
+                    <div
+                      key={apt.id}
+                      className={`p-4 rounded-xl transition shadow-2xs space-y-2.5 border ${
+                        isDone
+                          ? 'bg-emerald-50/40 hover:bg-emerald-50/70 border-emerald-300'
+                          : isCancelled
+                          ? 'bg-slate-50/60 border-slate-200 opacity-75'
+                          : 'bg-amber-50/40 hover:bg-amber-50/70 border-amber-300'
+                      }`}
+                    >
+                      {/* Row 1: Patient Name & Time Badge */}
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          {apt.patientName}
+                        </h4>
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 flex items-center space-x-1 ${
+                            isDone
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                              : isCancelled
+                              ? 'bg-slate-100 text-slate-600 border-slate-300'
+                              : 'bg-amber-100 text-amber-950 border-amber-300'
+                          }`}
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span>{apt.time}</span>
+                        </span>
+                      </div>
 
-                    {/* Row 3: Optional Notes */}
-                    {apt.notes && (
-                      <p className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200/70 italic leading-relaxed">
-                        "{apt.notes}"
-                      </p>
-                    )}
+                      {/* Row 2: Visit Type Tag & Date */}
+                      <div className="flex items-center space-x-2 text-xs text-slate-600 flex-wrap gap-y-1">
+                        <span className="bg-white border border-slate-200 text-teal-800 font-semibold px-2 py-0.5 rounded-md flex items-center space-x-1">
+                          <Stethoscope className="w-3 h-3 text-teal-600" />
+                          <span>{apt.type}</span>
+                        </span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-slate-600 font-medium">{apt.date}</span>
+                      </div>
 
-                    {/* Row 4: Action Button & Status */}
-                    <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2 flex-wrap">
-                      <button
-                        onClick={() => onSelectPatient(apt.patientId)}
-                        className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center space-x-1 hover:underline cursor-pointer group"
-                      >
-                        <span>Open Patient Chart</span>
-                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
+                      {/* Row 3: Optional Notes */}
+                      {apt.notes && (
+                        <p className="text-[11px] text-slate-600 bg-white p-2 rounded-lg border border-slate-200/70 italic leading-relaxed">
+                          "{apt.notes}"
+                        </p>
+                      )}
 
-                      {/* Tag Done / Status Actions */}
-                      <div className="flex items-center space-x-1.5 shrink-0">
-                        {apt.status === 'Scheduled' ? (
-                          <>
-                            {onUpdateAppointmentStatus && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateAppointmentStatus(apt.id, 'Completed');
-                                }}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition shadow-2xs flex items-center space-x-1 cursor-pointer active:scale-95"
-                                title="Tag Consultation as Done & Completed"
-                              >
-                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                <span>Tag Done</span>
-                              </button>
-                            )}
-                            <span className="text-[10px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-semibold">
-                              Scheduled
+                      {/* Row 4: Action Button & Status */}
+                      <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2 flex-wrap">
+                        <button
+                          onClick={() => onSelectPatient(apt.patientId)}
+                          className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center space-x-1 hover:underline cursor-pointer group"
+                        >
+                          <span>Open Patient Chart</span>
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+
+                        {/* Tag Done / Status Actions */}
+                        <div className="flex items-center space-x-1.5 shrink-0">
+                          {apt.status === 'Scheduled' ? (
+                            <>
+                              {onUpdateAppointmentStatus && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUpdateAppointmentStatus(apt.id, 'Completed');
+                                  }}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition shadow-2xs flex items-center space-x-1 cursor-pointer active:scale-95"
+                                  title="Tag Consultation as Done & Completed"
+                                >
+                                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                  <span>Tag Done</span>
+                                </button>
+                              )}
+                              <span className="text-[10px] text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 font-bold">
+                                ⏳ Pending / Not Done
+                              </span>
+                            </>
+                          ) : apt.status === 'Completed' ? (
+                            <div className="flex items-center space-x-1.5">
+                              <span className="text-[11px] text-emerald-900 font-bold flex items-center space-x-1 bg-emerald-100 px-2.5 py-0.5 rounded-md border border-emerald-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Done / Completed ✓</span>
+                              </span>
+                              {onUpdateAppointmentStatus && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUpdateAppointmentStatus(apt.id, 'Scheduled');
+                                  }}
+                                  className="text-[10px] text-slate-400 hover:text-slate-600 underline cursor-pointer"
+                                  title="Reopen / Revert to Scheduled"
+                                >
+                                  Undo
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                              Cancelled
                             </span>
-                          </>
-                        ) : apt.status === 'Completed' ? (
-                          <div className="flex items-center space-x-1.5">
-                            <span className="text-[11px] text-emerald-800 font-bold flex items-center space-x-1 bg-emerald-100 px-2.5 py-0.5 rounded-md border border-emerald-300">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Done / Completed ✓</span>
-                            </span>
-                            {onUpdateAppointmentStatus && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateAppointmentStatus(apt.id, 'Scheduled');
-                                }}
-                                className="text-[10px] text-slate-400 hover:text-slate-600 underline cursor-pointer"
-                                title="Reopen / Revert to Scheduled"
-                              >
-                                Undo
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                            Cancelled
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

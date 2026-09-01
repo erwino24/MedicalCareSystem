@@ -9,7 +9,22 @@ interface AddAppointmentModalProps {
   patients: Patient[];
   onAddAppointment: (appointment: Appointment, newPatientData?: Patient) => void;
   defaultDate?: string;
+  existingAppointments?: Appointment[];
 }
+
+const ALL_TIME_SLOTS = [
+  '08:30 AM',
+  '09:00 AM',
+  '09:30 AM',
+  '10:00 AM',
+  '10:30 AM',
+  '11:00 AM',
+  '01:30 PM',
+  '02:00 PM',
+  '02:30 PM',
+  '03:30 PM',
+  '04:30 PM'
+];
 
 export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
   isOpen,
@@ -17,6 +32,7 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
   patients,
   onAddAppointment,
   defaultDate,
+  existingAppointments = [],
 }) => {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
 
@@ -39,18 +55,40 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
   const [appointmentType, setAppointmentType] = useState<Appointment['type']>('Routine Prenatal');
   const [notes, setNotes] = useState<string>('');
 
+  // Calculate taken time slots for the chosen date
+  const takenTimeSlots = existingAppointments
+    .filter((a) => a.date === appointmentDate && a.status !== 'Cancelled')
+    .map((a) => a.time);
+
+  const availableTimeSlots = ALL_TIME_SLOTS.filter((t) => !takenTimeSlots.includes(t));
+  const isFullyBooked = availableTimeSlots.length === 0;
+
   useEffect(() => {
     if (isOpen) {
-      if (defaultDate) {
-        setAppointmentDate(defaultDate);
-      } else {
-        setAppointmentDate(format(new Date(), 'yyyy-MM-dd'));
+      const initialDate = defaultDate || format(new Date(), 'yyyy-MM-dd');
+      setAppointmentDate(initialDate);
+
+      // Auto-select first untaken slot
+      const initialTaken = existingAppointments
+        .filter((a) => a.date === initialDate && a.status !== 'Cancelled')
+        .map((a) => a.time);
+      const initialAvailable = ALL_TIME_SLOTS.filter((t) => !initialTaken.includes(t));
+      if (initialAvailable.length > 0) {
+        setAppointmentTime(initialAvailable[0]);
       }
+
       if (patients.length > 0 && !selectedPatientId) {
         setSelectedPatientId(patients[0].id);
       }
     }
   }, [isOpen, defaultDate, patients, selectedPatientId]);
+
+  // When date changes, check if current appointmentTime is taken; if so, switch to first available
+  useEffect(() => {
+    if (takenTimeSlots.includes(appointmentTime) && availableTimeSlots.length > 0) {
+      setAppointmentTime(availableTimeSlots[0]);
+    }
+  }, [appointmentDate, takenTimeSlots, availableTimeSlots, appointmentTime]);
 
   if (!isOpen) return null;
 
@@ -259,18 +297,46 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
             </div>
 
             <div>
-              <label className="font-semibold text-slate-700 block mb-1">Time Slot</label>
+              <label className="font-semibold text-slate-700 block mb-1 flex items-center justify-between">
+                <span>Time Slot</span>
+                <span className="text-[10px] text-teal-700 font-semibold">
+                  {availableTimeSlots.length} / {ALL_TIME_SLOTS.length} Available
+                </span>
+              </label>
               <select
                 value={appointmentTime}
+                disabled={isFullyBooked}
                 onChange={(e) => setAppointmentTime(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:bg-white"
+                className={`w-full border rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-teal-500 ${
+                  isFullyBooked
+                    ? 'bg-rose-50 border-rose-300 text-rose-800 cursor-not-allowed'
+                    : 'bg-slate-50 border-slate-300 focus:bg-white'
+                }`}
               >
-                {['08:30 AM', '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '01:30 PM', '02:00 PM', '02:30 PM', '03:30 PM', '04:30 PM'].map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+                {ALL_TIME_SLOTS.map((t) => {
+                  const isTaken = takenTimeSlots.includes(t);
+                  return (
+                    <option
+                      key={t}
+                      value={t}
+                      disabled={isTaken}
+                      className={isTaken ? 'text-slate-400 bg-slate-100 italic' : 'text-slate-900 font-medium'}
+                    >
+                      {t} {isTaken ? '⛔ (Taken / Booked)' : '✓ (Available)'}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
+
+          {/* Fully booked warning notice */}
+          {isFullyBooked && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-medium flex items-center space-x-2">
+              <span className="text-base">⚠️</span>
+              <span>All consultation time slots on <strong>{appointmentDate}</strong> are fully booked. Please select another date.</span>
+            </div>
+          )}
 
           {/* Appointment Type */}
           <div>
@@ -305,13 +371,18 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-xs transition"
+              disabled={isFullyBooked || takenTimeSlots.includes(appointmentTime)}
+              className={`px-5 py-2 text-white font-bold rounded-xl shadow-xs transition cursor-pointer ${
+                isFullyBooked || takenTimeSlots.includes(appointmentTime)
+                  ? 'bg-slate-300 cursor-not-allowed text-slate-500'
+                  : 'bg-teal-600 hover:bg-teal-700 active:scale-95'
+              }`}
             >
               Confirm & Schedule Appointment
             </button>

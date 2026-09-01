@@ -586,6 +586,7 @@ export function App() {
         patients={patients}
         onAddAppointment={handleAddAppointment}
         defaultDate={selectedAppointmentDate}
+        existingAppointments={appointments}
       />
 
       <ChangePasswordModal
