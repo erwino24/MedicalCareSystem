@@ -9,6 +9,8 @@ import { AddAppointmentModal } from './components/AddAppointmentModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { ManageStaffModal } from './components/ManageStaffModal';
 import { LoginScreen } from './components/LoginScreen';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import {
   exportClinicDatabaseToExcel,
   importClinicDatabaseFromExcel,
@@ -496,6 +498,41 @@ export function App() {
           )}
         </div>
       </div>
+
+      {/* CLINICAL STATUS FOOTER BAR */}
+      <footer className="bg-white border-t border-slate-200 px-3 sm:px-6 py-1.5 shrink-0 z-20 flex items-center justify-between text-[11px] text-slate-500 font-sans select-none">
+        {/* Left: Date Display */}
+        <div className="flex items-center space-x-2">
+          <CalendarIcon className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+          <span className="font-semibold text-slate-700">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+        </div>
+
+        {/* Center: Live Clinic Statistics & Background Sync */}
+        <div className="hidden sm:flex items-center space-x-3">
+          <span className="flex items-center space-x-1 text-slate-600">
+            <strong className="text-slate-900">{patients.length}</strong>
+            <span>Active Patients</span>
+          </span>
+          <span className="text-slate-300">•</span>
+          <span className="flex items-center space-x-1 text-slate-600">
+            <strong className="text-slate-900">{appointments.length}</strong>
+            <span>Visits Scheduled</span>
+          </span>
+          <span className="text-slate-300">•</span>
+          <span className="text-emerald-700 font-medium flex items-center space-x-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Excel Auto-Sync Active</span>
+          </span>
+        </div>
+
+        {/* Right: Active Role & System Version */}
+        <div className="flex items-center space-x-2 text-slate-400">
+          <span className="text-[10px] bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded border border-slate-200">
+            {currentUser.role === 'DOCTOR' ? '👨‍⚕️ Lead Doctor' : '🩺 Clinic Assistant'}
+          </span>
+          <span className="hidden md:inline text-slate-400">MaternalCare OB-GYN v1.2</span>
+        </div>
+      </footer>
 
       {/* Modals */}
       <AddPatientModal

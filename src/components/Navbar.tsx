@@ -14,7 +14,6 @@ import {
   CheckCircle,
   FolderSync
 } from 'lucide-react';
-import { format } from 'date-fns';
 import type { PractitionerUser } from '../types/patient';
 import { isFileSystemAccessSupported } from '../utils/excelService';
 
@@ -27,8 +26,8 @@ interface NavbarProps {
   onExportExcel: () => void;
   onImportExcel: (file: File) => void;
   isScheduleActive: boolean;
-  totalPatientsCount: number;
-  totalAppointmentsCount: number;
+  totalPatientsCount?: number;
+  totalAppointmentsCount?: number;
   isExcelLinked: boolean;
   linkedFileName: string | null;
   autoDownloadOnSave: boolean;
@@ -49,8 +48,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onExportExcel,
   onImportExcel,
   isScheduleActive,
-  totalPatientsCount,
-  totalAppointmentsCount,
   isExcelLinked,
   linkedFileName,
   autoDownloadOnSave,
@@ -61,7 +58,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onManageStaffClick,
   onLogoClick,
 }) => {
-  const todayFormatted = format(new Date(), 'EEEE, MMMM d, yyyy');
   const isNurse = currentUser.role === 'NURSE';
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isExcelOpen, setIsExcelOpen] = useState(false);
@@ -105,20 +101,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </p>
           </div>
         </button>
-
-        {/* Center Stats */}
-        <div className="hidden lg:flex items-center space-x-3">
-          <div className="flex items-center space-x-2 text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80 text-xs">
-            <CalendarIcon className="w-3.5 h-3.5 text-teal-600" />
-            <span className="font-medium text-slate-700">{todayFormatted}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200/80 text-xs">
-            <UserCheck className="w-3.5 h-3.5 text-teal-600" />
-            <span><strong className="text-slate-900">{totalPatientsCount}</strong> Patients</span>
-            <span className="text-slate-300">•</span>
-            <span><strong className="text-slate-900">{totalAppointmentsCount}</strong> Visits</span>
-          </div>
-        </div>
 
         {/* Right Actions, Excel Menu & User Profile */}
         <div className="flex items-center space-x-2 sm:space-x-3">
