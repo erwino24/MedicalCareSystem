@@ -51,19 +51,11 @@ export const PatientList: React.FC<PatientListProps> = ({
       <div className="p-3 sm:p-4 border-b border-slate-100 bg-slate-50/50 space-y-2.5 shrink-0 w-full max-w-full overflow-hidden">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center space-x-2 min-w-0">
-            <h2 className="text-sm sm:text-base font-bold text-slate-800 truncate">Patients Directory</h2>
-            <span className="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-semibold shrink-0">
-              {sortedPatients.length}
+            <h2 className="text-sm sm:text-base font-bold text-slate-800 tracking-tight truncate">Patients Directory</h2>
+            <span className="bg-teal-100 text-teal-800 text-xs px-2.5 py-0.5 rounded-full font-bold shadow-2xs shrink-0 border border-teal-200">
+              {sortedPatients.length} {sortedPatients.length === 1 ? 'Patient' : 'Patients'}
             </span>
           </div>
-          <button
-            onClick={onAddPatientClick}
-            className="text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium px-2 sm:px-2.5 py-1.5 rounded-lg flex items-center space-x-1 shadow-xs transition shrink-0 cursor-pointer"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline sm:inline">+ Add Patient</span>
-            <span className="xs:hidden sm:hidden">+ Add</span>
-          </button>
         </div>
 
         {/* Search Input */}
@@ -133,10 +125,17 @@ export const PatientList: React.FC<PatientListProps> = ({
       {/* Patient List Items Container */}
       <div className="flex-1 overflow-y-auto divide-y divide-slate-100 w-full max-w-full">
         {sortedPatients.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 space-y-2">
+          <div className="p-8 text-center text-slate-400 space-y-3">
             <Baby className="w-10 h-10 mx-auto stroke-1 text-slate-300" />
             <p className="text-sm font-medium text-slate-600">No patients found</p>
-            <p className="text-xs text-slate-400">Try adjusting your search filter or add a new patient.</p>
+            <p className="text-xs text-slate-400">Try adjusting your search filter or register a new patient.</p>
+            <button
+              onClick={onAddPatientClick}
+              className="inline-flex items-center space-x-1.5 text-xs bg-teal-600 hover:bg-teal-700 text-white font-medium px-3 py-1.5 rounded-lg shadow-xs transition cursor-pointer mt-1"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>+ Register New Patient</span>
+            </button>
           </div>
         ) : (
           sortedPatients.map((patient) => {
