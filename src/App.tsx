@@ -138,17 +138,24 @@ export function App() {
       }
     }
 
+    const isNurseUser = currentUser?.role === 'NURSE';
+
+    if (isNurseUser) {
+      showToast(`✨ ${actionLabel} successfully!`);
+      return;
+    }
+
     if (serverResult.success) {
-      showToast(`💾 Saved to OBGYN_Clinic_Database.xlsx on disk (${actionLabel})`);
+      showToast(`💾 Saved to OBGYN_Clinic_Database.xlsx (${actionLabel})`);
     } else if (serverResult.isLocked) {
-      showToast(`⚠️ Please close OBGYN_Clinic_Database.xlsx in WPS Office / Excel to update file on disk!`);
+      showToast(`⚠️ Please close OBGYN_Clinic_Database.xlsx in Excel/WPS to update file on disk!`);
     } else if (autoDL) {
       exportClinicDatabaseToExcel(updatedPatients, updatedAppointments, updatedUsers);
       showToast(`📥 Excel file downloaded (${actionLabel})`);
     } else {
-      showToast(`✨ Record saved to Excel Database (${actionLabel})`);
+      showToast(`✨ Record saved to Database (${actionLabel})`);
     }
-  }, [showToast]);
+  }, [currentUser, showToast]);
 
   // Automatically fetch & load OBGYN_Clinic_Database.xlsx dynamically if patients list is empty!
   useEffect(() => {
@@ -307,6 +314,32 @@ export function App() {
     syncToExcelStorage(updatedPatients, appointments, users, `Updated ${updatedPatient.fullName}`);
   };
 
+  const handleDeletePatient = (patientIdToDelete: string) => {
+    const patientToDelete = patients.find((p) => p.id === patientIdToDelete);
+    const updatedPatients = patients.filter((p) => p.id !== patientIdToDelete);
+    const updatedAppointments = appointments.filter((a) => a.patientId !== patientIdToDelete);
+
+    setPatients(updatedPatients);
+    setAppointments(updatedAppointments);
+
+    // If active patient was deleted, pick the next available or clear
+    if (selectedPatientId === patientIdToDelete) {
+      if (updatedPatients.length > 0) {
+        setSelectedPatientId(updatedPatients[0].id);
+      } else {
+        setSelectedPatientId(null);
+      }
+    }
+    setMobileView('list');
+
+    syncToExcelStorage(
+      updatedPatients,
+      updatedAppointments,
+      users,
+      `Permanently deleted ${patientToDelete?.fullName || 'patient record'}`
+    );
+  };
+
   const handleOpenAddAppointment = (date?: string) => {
     setSelectedAppointmentDate(date);
     setIsAddAppointmentModalOpen(true);
@@ -380,7 +413,7 @@ export function App() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-slate-100 font-sans relative">
+    <div className="h-screen w-full max-w-full overflow-hidden flex flex-col bg-slate-100 font-sans relative">
       {/* Toast Notification Banner */}
       {notification && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl border border-slate-700 animate-in fade-in slide-in-from-top-2 duration-200 flex items-center space-x-2">
@@ -416,10 +449,10 @@ export function App() {
       />
 
       {/* MAIN CONTAINER: Responsive Layout */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
         {/* LEFT PANEL: Patient Directory */}
         <div
-          className={`h-full w-full md:w-80 lg:w-96 shrink-0 border-r border-slate-200 transition-all ${
+          className={`h-full w-full max-w-full md:w-80 lg:w-96 md:max-w-none shrink-0 border-r border-slate-200 transition-all ${
             mobileView === 'list' ? 'block' : 'hidden md:block'
           }`}
         >
@@ -451,7 +484,9 @@ export function App() {
               patient={selectedPatient}
               onBackToList={handleBackToList}
               onUpdatePatient={handleUpdatePatient}
+              onDeletePatient={handleDeletePatient}
               currentUserRole={currentUser.role}
+              currentUser={currentUser}
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center bg-slate-50 p-8 text-center space-y-3">

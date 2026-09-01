@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { Patient, CheckupRecord } from '../types/patient';
+import type { Patient, CheckupRecord, PrescriptionItem, PractitionerUser } from '../types/patient';
 import { calculateObGynMetrics } from '../utils/obgynCalculator';
 import { CheckupTable } from './CheckupTable';
+import { PrescriptionModal } from './PrescriptionModal';
 import {
   ArrowLeft,
   Edit2,
@@ -13,24 +14,34 @@ import {
   MapPin,
   Heart,
   ShieldAlert,
-  FileText
+  FileText,
+  Printer,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 interface PatientDetailsProps {
   patient: Patient;
   onBackToList: () => void;
   onUpdatePatient: (updatedPatient: Patient) => void;
+  onDeletePatient?: (patientId: string) => void;
   currentUserRole?: 'DOCTOR' | 'NURSE';
+  currentUser?: PractitionerUser | null;
 }
 
 export const PatientDetails: React.FC<PatientDetailsProps> = ({
   patient,
   onBackToList,
   onUpdatePatient,
+  onDeletePatient,
   currentUserRole = 'DOCTOR',
+  currentUser,
 }) => {
   const isNurse = currentUserRole === 'NURSE';
   const [isEditing, setIsEditing] = useState(false);
+  const [isPrescriptionOpen, setIsPrescriptionOpen] = useState(false);
+  const [activeCheckupForPrescription, setActiveCheckupForPrescription] = useState<CheckupRecord | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Editable Form State
   const [fullName, setFullName] = useState(patient.fullName);
@@ -45,6 +56,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
   const [lmp, setLmp] = useState(patient.lmp);
   const [illnessHistory, setIllnessHistory] = useState(patient.illnessHistory);
   const [allergies, setAllergies] = useState(patient.allergies || '');
+  const [status, setStatus] = useState<'Active' | 'Inactive'>(patient.status || 'Active');
 
   // Calculate live AOG & EDD from current LMP (either in edit state or patient prop)
   const activeLmp = isEditing ? lmp : patient.lmp;
@@ -86,8 +98,25 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
       lmp,
       illnessHistory,
       allergies,
+      status,
     });
     setIsEditing(false);
+  };
+
+  const handleToggleStatus = () => {
+    const newStatus = (patient.status || 'Active') === 'Active' ? 'Inactive' : 'Active';
+    setStatus(newStatus);
+    onUpdatePatient({
+      ...patient,
+      status: newStatus,
+    });
+  };
+
+  const handleConfirmDeletePatient = () => {
+    if (onDeletePatient) {
+      onDeletePatient(patient.id);
+      setIsDeleteModalOpen(false);
+    }
   };
 
   const handleAddCheckup = (newCheckupData: Omit<CheckupRecord, 'id'>) => {
@@ -108,13 +137,28 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
     });
   };
 
+  const handleOpenPrescriptionModal = (checkup?: CheckupRecord) => {
+    setActiveCheckupForPrescription(checkup || null);
+    setIsPrescriptionOpen(true);
+  };
+
+  const handleSavePrescription = (checkupId: string, items: PrescriptionItem[]) => {
+    const updatedCheckups = patient.checkups.map((c) =>
+      c.id === checkupId ? { ...c, prescriptions: items } : c
+    );
+    onUpdatePatient({
+      ...patient,
+      checkups: updatedCheckups,
+    });
+  };
+
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-y-auto">
       {/* MOBILE ONLY STICKY BACK BUTTON (md:hidden) */}
       <div className="sticky top-0 z-30 bg-slate-900 text-white p-3 md:hidden shadow-md flex items-center justify-between">
         <button
           onClick={onBackToList}
-          className="flex items-center space-x-2 text-sm font-semibold hover:text-teal-300 transition"
+          className="flex items-center space-x-2 text-sm font-semibold hover:text-teal-300 transition cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>⬅ Back to Patient List</span>
@@ -141,6 +185,26 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                   <span className="bg-slate-100 text-slate-700 font-mono font-bold text-xs px-2.5 py-1 rounded-full border border-slate-200">
                     Obstetric History: G{patient.gravida} P{patient.para}
                   </span>
+
+                  {/* Active / Inactive Status Toggle Pill */}
+                  <button
+                    onClick={handleToggleStatus}
+                    className={`font-semibold text-xs px-2.5 py-1 rounded-full border flex items-center space-x-1.5 transition cursor-pointer active:scale-95 ${
+                      (patient.status || 'Active') === 'Active'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                        : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                    }`}
+                    title="Click to toggle Active / Inactive status"
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${ (patient.status || 'Active') === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }`} />
+                    <span>{(patient.status || 'Active') === 'Active' ? '🟢 Active Prenatal' : '⚪ Inactive / Delivered'}</span>
+                  </button>
+
+                  {isNurse && (
+                    <span className="bg-amber-50 text-amber-800 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-amber-200">
+                      Nurse View (Triage Only)
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -149,33 +213,60 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
               </div>
             </div>
 
-            {/* Inline Edit Toggle Button */}
-            {!isEditing ? (
-              <button
-                onClick={handleStartEdit}
-                className="self-start sm:self-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs px-3.5 py-2 rounded-xl border border-slate-200 flex items-center space-x-1.5 transition shadow-2xs"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-teal-600" />
-                <span>Edit Patient Info</span>
-              </button>
-            ) : (
-              <div className="flex items-center space-x-2">
+            {/* Actions: Prescribe Rx & Inline Edit Toggle Button & Doctor-Only Delete */}
+            <div className="flex items-center space-x-2 self-start sm:self-center flex-wrap gap-y-2">
+              {!isNurse && (
                 <button
-                  onClick={handleSaveEdit}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-2 rounded-xl flex items-center space-x-1 shadow-xs transition"
+                  onClick={() => handleOpenPrescriptionModal()}
+                  className="bg-teal-50 hover:bg-teal-100 text-teal-800 font-semibold text-xs px-3.5 py-2 rounded-xl border border-teal-200 flex items-center space-x-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                  title="Generate & Print Official Doctor's Prescription (Rx)"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Save Changes</span>
+                  <Printer className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Print Prescription (℞)</span>
                 </button>
-                <button
-                  onClick={handleCancelEdit}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3.5 py-2 rounded-xl flex items-center space-x-1 transition"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>Cancel</span>
-                </button>
-              </div>
-            )}
+              )}
+
+              {!isEditing ? (
+                <>
+                  <button
+                    onClick={handleStartEdit}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs px-3.5 py-2 rounded-xl border border-slate-200 flex items-center space-x-1.5 transition shadow-2xs cursor-pointer"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Edit Info</span>
+                  </button>
+
+                  {/* Doctor-Only Full Patient Deletion */}
+                  {!isNurse && onDeletePatient && (
+                    <button
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs px-3 py-2 rounded-xl border border-rose-200 flex items-center space-x-1.5 transition shadow-2xs cursor-pointer active:scale-95"
+                      title="Lead Doctor: Permanently Delete Patient Record"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span className="hidden sm:inline">Delete Record</span>
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleSaveEdit}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-3.5 py-2 rounded-xl flex items-center space-x-1 shadow-xs transition cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium text-xs px-3.5 py-2 rounded-xl flex items-center space-x-1 transition cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* EDIT FORM MODE */}
@@ -251,6 +342,18 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                   {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'].map((b) => (
                     <option key={b} value={b}>{b}</option>
                   ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="font-semibold text-slate-700 block mb-1">Patient Clinical Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive')}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 font-medium"
+                >
+                  <option value="Active">🟢 Active (Current Prenatal Care)</option>
+                  <option value="Inactive">⚪ Inactive (Delivered / Discharged / Transferred)</option>
                 </select>
               </div>
 
@@ -434,8 +537,74 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
           onAddCheckup={handleAddCheckup}
           onDeleteCheckup={handleDeleteCheckup}
           currentUserRole={currentUserRole}
+          onOpenPrescription={handleOpenPrescriptionModal}
         />
       </div>
+
+      {/* DOCTOR OFFICIAL PRESCRIPTION MODAL (Rx Pad with Digital Sign & Print) */}
+      <PrescriptionModal
+        isOpen={isPrescriptionOpen}
+        onClose={() => setIsPrescriptionOpen(false)}
+        patient={patient}
+        checkup={activeCheckupForPrescription}
+        currentUser={
+          currentUser || {
+            id: 'usr-default',
+            fullName: 'Dr. Sarah Jenkins',
+            title: 'MD, FPOGS',
+            role: currentUserRole,
+            pinCode: '1234',
+            avatar: 'SJ',
+          }
+        }
+        onSavePrescription={handleSavePrescription}
+      />
+
+      {/* DOCTOR-ONLY PERMANENT RECORD DELETION CONFIRMATION MODAL */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center space-x-3 text-rose-600 mb-4">
+              <div className="p-3 bg-rose-100 rounded-xl shrink-0">
+                <AlertTriangle className="w-6 h-6 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">Delete Full Patient Record?</h3>
+                <span className="text-[11px] bg-rose-50 text-rose-700 font-semibold px-2 py-0.5 rounded border border-rose-200 mt-0.5 inline-block">
+                  👨‍⚕️ Lead Doctor Authorization
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 mb-6 text-xs text-slate-700">
+              <p>You are about to permanently delete the entire medical profile for:</p>
+              <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                <p className="text-sm font-bold text-slate-900">{patient.fullName}</p>
+                <p className="text-xs text-slate-500">{patient.age} yrs • G{patient.gravida}P{patient.para} • {patient.contactNumber}</p>
+              </div>
+              <div className="text-[11px] text-rose-700 bg-rose-50 p-2.5 rounded-lg border border-rose-200 leading-relaxed">
+                ⚠️ <strong>Permanent Action:</strong> This will erase all patient demographic information, <strong>{patient.checkups.length} consultation visit records</strong>, prescriptions, and medical notes from the clinic database.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeletePatient}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center space-x-1.5 active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Yes, Delete Record</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

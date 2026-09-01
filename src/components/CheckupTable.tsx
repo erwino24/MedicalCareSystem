@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import type { CheckupRecord } from '../types/patient';
 import { format } from 'date-fns';
-import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert } from 'lucide-react';
+import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert, Printer, Pill } from 'lucide-react';
 
 interface CheckupTableProps {
   checkups: CheckupRecord[];
   onAddCheckup: (newCheckup: Omit<CheckupRecord, 'id'>) => void;
   onDeleteCheckup?: (checkupId: string) => void;
   currentUserRole?: 'DOCTOR' | 'NURSE';
+  onOpenPrescription?: (checkup?: CheckupRecord) => void;
 }
 
 export const CheckupTable: React.FC<CheckupTableProps> = ({
@@ -15,6 +16,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   onAddCheckup,
   onDeleteCheckup,
   currentUserRole = 'DOCTOR',
+  onOpenPrescription,
 }) => {
   const isNurse = currentUserRole === 'NURSE';
   const todayDate = format(new Date(), 'yyyy-MM-dd');
@@ -93,18 +95,30 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
             </div>
             <p className="text-xs text-slate-500">
               {isNurse
-                ? 'Record patient vitals and triage prep (Prescriptions & Deletions restricted to Doctor)'
-                : 'Record consultation details, diagnosis, procedures, and review history'}
+                ? 'Record patient vitals & triage (Prescription creation & record deletions are restricted to Doctor)'
+                : 'Record consultation details, diagnosis, procedures, and print prescriptions'}
             </p>
           </div>
         </div>
 
-        {saveSuccess && (
-          <span className="flex items-center space-x-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-3 py-1 rounded-full font-medium animate-bounce">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Record Saved Successfully!</span>
-          </span>
-        )}
+        <div className="flex items-center space-x-2">
+          {!isNurse && onOpenPrescription && (
+            <button
+              onClick={() => onOpenPrescription()}
+              className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs transition flex items-center space-x-1.5 active:scale-95 cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Issue Prescription (℞)</span>
+            </button>
+          )}
+
+          {saveSuccess && (
+            <span className="flex items-center space-x-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-3 py-1 rounded-full font-medium animate-bounce">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Record Saved Successfully!</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {errorMsg && (
@@ -228,207 +242,245 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                     <span className="w-2 h-2 rounded-full bg-teal-500"></span>
                     <span className="font-bold text-slate-900 text-xs">{rec.date}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {rec.followUpDate && (
-                      <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">
-                        Follow-up: {rec.followUpDate}
+                    <div className="flex items-center space-x-1.5">
+                      {!isNurse && onOpenPrescription && (
+                        <button
+                          onClick={() => onOpenPrescription(rec)}
+                          className="text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-[10px] font-bold px-2 py-0.5 rounded flex items-center space-x-1 transition cursor-pointer"
+                          title="Print / View Prescription for this visit"
+                        >
+                          <Printer className="w-3 h-3 text-teal-600" />
+                          <span>Rx</span>
+                        </button>
+                      )}
+                      {rec.followUpDate && (
+                        <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">
+                          Follow-up: {rec.followUpDate}
+                        </span>
+                      )}
+                      {!isNurse && onDeleteCheckup && (
+                        <button
+                          onClick={() => onDeleteCheckup(rec.id)}
+                          className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 cursor-pointer"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 text-[11px]">
+                    {rec.bp && (
+                      <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200 font-medium">
+                        BP: <strong>{rec.bp}</strong>
                       </span>
                     )}
-                    {!isNurse && onDeleteCheckup && (
-                      <button
-                        onClick={() => onDeleteCheckup(rec.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    {rec.weightKg && (
+                      <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+                        Wt: <strong>{rec.weightKg} kg</strong>
+                      </span>
+                    )}
+                    {rec.fhrBpm && (
+                      <span className="bg-teal-50 text-teal-800 px-2 py-0.5 rounded border border-teal-200 font-medium">
+                        FHR: <strong>{rec.fhrBpm} bpm</strong>
+                      </span>
                     )}
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-2 text-[11px]">
-                  {rec.bp && (
-                    <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200 font-medium">
-                      BP: <strong>{rec.bp}</strong>
-                    </span>
-                  )}
-                  {rec.weightKg && (
-                    <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-                      Wt: <strong>{rec.weightKg} kg</strong>
-                    </span>
-                  )}
-                  {rec.fhrBpm && (
-                    <span className="bg-teal-50 text-teal-800 px-2 py-0.5 rounded border border-teal-200 font-medium">
-                      FHR: <strong>{rec.fhrBpm} bpm</strong>
-                    </span>
-                  )}
-                </div>
-
-                <div className="text-xs space-y-1">
-                  <p className="font-semibold text-slate-800">{rec.diagnosis}</p>
-                  {rec.procedure && <p className="text-slate-600 text-[11px]">{rec.procedure}</p>}
-                  {rec.notes && <p className="text-slate-400 text-[10px] italic">Notes: {rec.notes}</p>}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* DESKTOP TABLE VIEW (Shown on screens >= 768px) */}
-      <div className="hidden md:block overflow-x-auto w-full">
-        <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[760px]">
-          <thead className="bg-slate-100/80 text-slate-600 font-semibold border-b border-slate-200">
-            <tr>
-              <th className="py-3 px-4 w-[110px]">Date</th>
-              <th className="py-3 px-3 w-[150px]">Vitals (Weight / BP / FHR)</th>
-              <th className="py-3 px-3 min-w-[200px]">Diagnosis</th>
-              <th className="py-3 px-3 min-w-[200px]">Procedure / Treatment</th>
-              <th className="py-3 px-3 w-[120px]">Follow-up</th>
-              <th className="py-3 px-4 w-[110px] text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {/* ROW 1: LOCKED INPUT ROW FOR TODAY'S CHECK-UP */}
-            <tr className="bg-teal-50/50 border-b-2 border-teal-200/80">
-              <td className="py-3 px-4 align-top">
-                <div className="flex items-center space-x-1.5 font-bold text-teal-800 bg-white border border-teal-300 rounded px-2.5 py-1.5 shadow-2xs">
-                  <Calendar className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                  <span>{todayDate}</span>
-                </div>
-                <span className="text-[10px] text-teal-600 font-semibold block mt-1">Today (Locked)</span>
-              </td>
-
-              <td className="py-3 px-3 align-top space-y-1.5">
-                <div>
-                  <input
-                    type="text"
-                    placeholder="BP (e.g. 120/80)"
-                    value={bp}
-                    onChange={(e) => setBp(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    placeholder="Weight (kg)"
-                    value={weightKg}
-                    onChange={(e) => setWeightKg(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    placeholder="FHR (bpm)"
-                    value={fhrBpm}
-                    onChange={(e) => setFhrBpm(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold text-teal-800 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-                  />
-                </div>
-              </td>
-
-              <td className="py-3 px-3 align-top">
-                <textarea
-                  rows={3}
-                  placeholder={isNurse ? "Nurse triage & initial assessment..." : "Enter clinical diagnosis / assessment findings..."}
-                  value={diagnosis}
-                  onChange={(e) => setDiagnosis(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500 resize-none font-medium"
-                />
-              </td>
-
-              <td className="py-3 px-3 align-top">
-                <textarea
-                  rows={3}
-                  placeholder={isNurse ? "Vitals recorded / Prep actions..." : "Enter procedure & prescriptions..."}
-                  value={procedure}
-                  onChange={(e) => setProcedure(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500 resize-none"
-                />
-              </td>
-
-              <td className="py-3 px-3 align-top">
-                <input
-                  type="date"
-                  value={followUpDate}
-                  onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </td>
-
-              <td className="py-3 px-4 align-top text-right">
-                <button
-                  onClick={handleSave}
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium px-3 py-2 rounded-lg shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95 text-xs"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>{isNurse ? 'Save Vitals' : 'Save Record'}</span>
-                </button>
-              </td>
-            </tr>
-
-            {/* ROW 2+: PAST READ-ONLY CHECKUP RECORDS */}
-            {checkups.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400">
-                  <Clock className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                  <p className="font-medium text-slate-500">No past check-up records yet.</p>
-                  <p className="text-[11px] text-slate-400">Fill in Row 1 above and click "Save Record".</p>
-                </td>
-              </tr>
-            ) : (
-              checkups.map((rec) => (
-                <tr key={rec.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3.5 px-4 font-semibold text-slate-800 align-top">
-                    <div className="flex items-center space-x-1.5">
-                      <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                      <span>{rec.date}</span>
-                    </div>
-                  </td>
-
-                  <td className="py-3.5 px-3 text-slate-600 align-top">
-                    <div className="space-y-0.5">
-                      {rec.bp && <p className="font-medium text-slate-800">BP: {rec.bp}</p>}
-                      {rec.weightKg && <p>Wt: {rec.weightKg} kg</p>}
-                      {rec.fhrBpm && <p className="text-teal-700 font-medium">FHR: {rec.fhrBpm} bpm</p>}
-                      {!rec.bp && !rec.weightKg && !rec.fhrBpm && <span className="text-slate-400">Standard</span>}
-                    </div>
-                  </td>
-
-                  <td className="py-3.5 px-3 align-top font-medium text-slate-800">
-                    <p className="leading-relaxed">{rec.diagnosis}</p>
-                  </td>
-
-                  <td className="py-3.5 px-3 align-top text-slate-600">
-                    <p className="leading-relaxed">{rec.procedure}</p>
-                    {rec.notes && <p className="text-[11px] text-slate-400 italic mt-1">Note: {rec.notes}</p>}
-                  </td>
-
-                  <td className="py-3.5 px-3 align-top">
-                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono text-[11px]">
-                      {rec.followUpDate || 'None'}
-                    </span>
-                  </td>
-
-                  <td className="py-3.5 px-4 align-top text-right">
-                    {!isNurse && onDeleteCheckup ? (
-                      <button
-                        onClick={() => onDeleteCheckup(rec.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1.5 rounded hover:bg-rose-50 transition"
-                        title="Delete record (Doctor only)"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <span className="text-[10px] text-slate-300 select-none">Locked</span>
+                  <div className="text-xs space-y-1">
+                    <p className="font-semibold text-slate-800">{rec.diagnosis}</p>
+                    {rec.procedure && <p className="text-slate-600 text-[11px]">{rec.procedure}</p>}
+                    {rec.prescriptions && rec.prescriptions.length > 0 && (
+                      <div className="bg-teal-50/60 border border-teal-200 rounded p-1.5 text-[10px] text-teal-900">
+                        <span className="font-bold">℞ Prescribed ({rec.prescriptions.length}): </span>
+                        {rec.prescriptions.map((p) => p.genericName).join(', ')}
+                      </div>
                     )}
-                  </td>
-                </tr>
+                    {rec.notes && <p className="text-slate-400 text-[10px] italic">Notes: {rec.notes}</p>}
+                  </div>
+                </div>
               ))
             )}
-          </tbody>
+          </div>
+        </div>
+
+        {/* DESKTOP TABLE VIEW (Shown on screens >= 768px) */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[760px]">
+            <thead className="bg-slate-100/80 text-slate-600 font-semibold border-b border-slate-200">
+              <tr>
+                <th className="py-3 px-4 w-[110px]">Date</th>
+                <th className="py-3 px-3 w-[150px]">Vitals (Weight / BP / FHR)</th>
+                <th className="py-3 px-3 min-w-[200px]">Diagnosis</th>
+                <th className="py-3 px-3 min-w-[200px]">Procedure / Treatment & Rx</th>
+                <th className="py-3 px-3 w-[120px]">Follow-up</th>
+                <th className="py-3 px-4 w-[130px] text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {/* ROW 1: LOCKED INPUT ROW FOR TODAY'S CHECK-UP */}
+              <tr className="bg-teal-50/50 border-b-2 border-teal-200/80">
+                <td className="py-3 px-4 align-top">
+                  <div className="flex items-center space-x-1.5 font-bold text-teal-800 bg-white border border-teal-300 rounded px-2.5 py-1.5 shadow-2xs">
+                    <Calendar className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                    <span>{todayDate}</span>
+                  </div>
+                  <span className="text-[10px] text-teal-600 font-semibold block mt-1">Today (Locked)</span>
+                </td>
+
+                <td className="py-3 px-3 align-top space-y-1.5">
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="BP (e.g. 120/80)"
+                      value={bp}
+                      onChange={(e) => setBp(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="Weight (kg)"
+                      value={weightKg}
+                      onChange={(e) => setWeightKg(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="FHR (bpm)"
+                      value={fhrBpm}
+                      onChange={(e) => setFhrBpm(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold text-teal-800 focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                  </div>
+                </td>
+
+                <td className="py-3 px-3 align-top">
+                  <textarea
+                    rows={3}
+                    placeholder={isNurse ? "Nurse triage & initial assessment..." : "Enter clinical diagnosis / assessment findings..."}
+                    value={diagnosis}
+                    onChange={(e) => setDiagnosis(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500 resize-none font-medium"
+                  />
+                </td>
+
+                <td className="py-3 px-3 align-top">
+                  <textarea
+                    rows={3}
+                    placeholder={isNurse ? "Vitals recorded / Prep actions..." : "Enter procedure & prescriptions..."}
+                    value={procedure}
+                    onChange={(e) => setProcedure(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500 resize-none"
+                  />
+                </td>
+
+                <td className="py-3 px-3 align-top">
+                  <input
+                    type="date"
+                    value={followUpDate}
+                    onChange={(e) => setFollowUpDate(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </td>
+
+                <td className="py-3 px-4 align-top text-right space-y-1.5">
+                  <button
+                    onClick={handleSave}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium px-3 py-2 rounded-lg shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95 text-xs cursor-pointer"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{isNurse ? 'Save Vitals' : 'Save Record'}</span>
+                  </button>
+                </td>
+              </tr>
+
+              {/* ROW 2+: PAST READ-ONLY CHECKUP RECORDS */}
+              {checkups.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <Clock className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                    <p className="font-medium text-slate-500">No past check-up records yet.</p>
+                    <p className="text-[11px] text-slate-400">Fill in Row 1 above and click "Save Record".</p>
+                  </td>
+                </tr>
+              ) : (
+                checkups.map((rec) => (
+                  <tr key={rec.id} className="hover:bg-slate-50/80 transition">
+                    <td className="py-3.5 px-4 font-semibold text-slate-800 align-top">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                        <span>{rec.date}</span>
+                      </div>
+                    </td>
+
+                    <td className="py-3.5 px-3 text-slate-600 align-top">
+                      <div className="space-y-0.5">
+                        {rec.bp && <p className="font-medium text-slate-800">BP: {rec.bp}</p>}
+                        {rec.weightKg && <p>Wt: {rec.weightKg} kg</p>}
+                        {rec.fhrBpm && <p className="text-teal-700 font-medium">FHR: {rec.fhrBpm} bpm</p>}
+                        {!rec.bp && !rec.weightKg && !rec.fhrBpm && <span className="text-slate-400">Standard</span>}
+                      </div>
+                    </td>
+
+                    <td className="py-3.5 px-3 align-top font-medium text-slate-800">
+                      <p className="leading-relaxed">{rec.diagnosis}</p>
+                    </td>
+
+                    <td className="py-3.5 px-3 align-top text-slate-600">
+                      <p className="leading-relaxed">{rec.procedure}</p>
+                      {rec.prescriptions && rec.prescriptions.length > 0 && (
+                        <div className="bg-teal-50/60 border border-teal-200 rounded p-1.5 text-[10px] text-teal-900 mt-1">
+                          <span className="font-bold">℞ Prescribed ({rec.prescriptions.length}): </span>
+                          {rec.prescriptions.map((p) => p.genericName).join(', ')}
+                        </div>
+                      )}
+                      {rec.notes && <p className="text-[11px] text-slate-400 italic mt-1">Note: {rec.notes}</p>}
+                    </td>
+
+                    <td className="py-3.5 px-3 align-top">
+                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono text-[11px]">
+                        {rec.followUpDate || 'None'}
+                      </span>
+                    </td>
+
+                    <td className="py-3.5 px-4 align-top text-right">
+                      <div className="flex items-center justify-end space-x-1">
+                        {!isNurse && onOpenPrescription && (
+                          <button
+                            onClick={() => onOpenPrescription(rec)}
+                            className="bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 p-1.5 rounded-lg text-xs flex items-center space-x-1 transition cursor-pointer"
+                            title="Print Prescription (Rx)"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span className="font-bold text-[10px]">Rx</span>
+                          </button>
+                        )}
+                        {!isNurse && onDeleteCheckup ? (
+                          <button
+                            onClick={() => onDeleteCheckup(rec.id)}
+                            className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                            title="Delete record (Doctor only)"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          isNurse && (
+                            <span className="text-[10px] text-slate-400 italic bg-slate-50 px-2 py-1 rounded">
+                              Triage Logged
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
         </table>
       </div>
     </div>

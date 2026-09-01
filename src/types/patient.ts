@@ -1,3 +1,15 @@
+export interface PrescriptionItem {
+  id: string;
+  genericName: string;
+  brandName?: string;
+  dosage: string; // e.g. "500mg" or "60mg / 400mcg"
+  form: string; // "Tablet" | "Capsule" | "Syrup" | "Softgel" | "Injection"
+  frequency: string; // "Once daily" | "Twice daily" | "Three times daily" | "Every 8 hours"
+  instructions: string; // "Take after meals with a full glass of water"
+  quantity: string; // "#30 tablets"
+  duration: string; // "30 days"
+}
+
 export interface CheckupRecord {
   id: string;
   date: string; // YYYY-MM-DD
@@ -9,6 +21,7 @@ export interface CheckupRecord {
   procedure: string;
   followUpDate: string;
   notes?: string;
+  prescriptions?: PrescriptionItem[];
 }
 
 export interface Patient {
@@ -26,6 +39,7 @@ export interface Patient {
   lmp: string;     // YYYY-MM-DD (Last Menstrual Period)
   illnessHistory: string;
   allergies?: string;
+  status?: 'Active' | 'Inactive';
   checkups: CheckupRecord[];
 }
 

@@ -53,9 +53,9 @@ export function buildClinicWorkbook(
       'LMP (YYYY-MM-DD)': p.lmp,
       'EDD (Estimated Due Date)': metrics.edd,
       'AOG (Age of Gestation)': metrics.aogFormatted,
-      'Trimester Stage': metrics.trimester,
       'Allergies': p.allergies || 'None',
       'Illness & Medical History': p.illnessHistory,
+      'Status': p.status || 'Active',
       'Total Consultations': p.checkups.length,
     };
   });
@@ -326,6 +326,7 @@ export function importClinicDatabaseFromExcel(file: File): Promise<ExcelImportRe
             lmp: String(row['LMP (YYYY-MM-DD)'] || row['lmp'] || format(new Date(), 'yyyy-MM-dd')),
             illnessHistory: String(row['Illness & Medical History'] || row['illnessHistory'] || 'No history reported.'),
             allergies: row['Allergies'] && row['Allergies'] !== 'None' ? String(row['Allergies']) : undefined,
+            status: (String(row['Status'] || row['status']).toLowerCase() === 'inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
             checkups: checkupsByPatientId[patId] || [],
           };
         });
