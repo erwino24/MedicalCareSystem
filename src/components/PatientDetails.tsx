@@ -588,10 +588,10 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-center sm:text-left">
                   <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
                     <span className="text-xs text-teal-200 font-medium block">AOG (Age of Gestation)</span>
-                    <p className="text-xl sm:text-2xl font-extrabold text-white mt-0.5">
+                    <p className="text-xl font-extrabold text-white mt-0.5">
                       {obgynMetrics.aogFormatted}
                     </p>
                     <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
@@ -600,8 +600,18 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                   </div>
 
                   <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                    <span className="text-xs text-teal-200 font-medium block">Estimated Conception Date</span>
+                    <p className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
+                      {obgynMetrics.conceptionDate}
+                    </p>
+                    <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
+                      Ovulation Window (LMP + 14d)
+                    </span>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
                     <span className="text-xs text-teal-200 font-medium block">EDD (Estimated Due Date)</span>
-                    <p className="text-xl sm:text-2xl font-extrabold text-white mt-0.5">
+                    <p className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
                       {obgynMetrics.edd}
                     </p>
                     <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
@@ -612,11 +622,11 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                   <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
                     <span className="text-xs text-teal-200 font-medium block">Trimester Stage</span>
                     <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
-                      <span className="bg-white text-teal-900 font-black text-sm px-3 py-1 rounded-lg shadow-2xs">
-                        {obgynMetrics.trimester} Trimester
+                      <span className="bg-white text-teal-900 font-black text-xs sm:text-sm px-2.5 py-1 rounded-lg shadow-2xs">
+                        {obgynMetrics.trimester}
                       </span>
                       <span className="text-[11px] text-teal-100">
-                        {obgynMetrics.daysRemaining} days remaining
+                        {obgynMetrics.daysRemaining} days left
                       </span>
                     </div>
                   </div>

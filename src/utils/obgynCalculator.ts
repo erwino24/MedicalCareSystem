@@ -3,6 +3,7 @@ import { parseISO, addDays, differenceInDays, isValid, format } from 'date-fns';
 export interface CalculationResult {
   edd: string;       // Formatted date string e.g., "Nov 15, 2026"
   eddRaw: string;    // YYYY-MM-DD
+  conceptionDate: string; // Formatted date string e.g., "Feb 22, 2026"
   aogWeeks: number;  // Full weeks
   aogDays: number;   // Remaining days
   aogFormatted: string; // e.g. "24 weeks 3 days"
@@ -18,6 +19,7 @@ export function calculateObGynMetrics(lmpString: string, targetDate: Date = new 
     return {
       edd: 'N/A',
       eddRaw: '',
+      conceptionDate: 'N/A',
       aogWeeks: 0,
       aogDays: 0,
       aogFormatted: 'LMP not set',
@@ -32,6 +34,7 @@ export function calculateObGynMetrics(lmpString: string, targetDate: Date = new 
     return {
       edd: 'Invalid Date',
       eddRaw: '',
+      conceptionDate: 'N/A',
       aogWeeks: 0,
       aogDays: 0,
       aogFormatted: 'Invalid LMP',
@@ -52,6 +55,7 @@ export function calculateObGynMetrics(lmpString: string, targetDate: Date = new 
     return {
       edd: eddFormatted,
       eddRaw,
+      conceptionDate: 'Future Date',
       aogWeeks: 0,
       aogDays: 0,
       aogFormatted: 'Future LMP',
@@ -78,9 +82,14 @@ export function calculateObGynMetrics(lmpString: string, targetDate: Date = new 
 
   const aogFormatted = `${aogWeeks}w ${aogDays}d`;
 
+  // Conception Date is approximately LMP + 14 days (ovulation window)
+  const conceptionDateObj = addDays(lmpDate, 14);
+  const conceptionDate = format(conceptionDateObj, 'MMM d, yyyy');
+
   return {
     edd: eddFormatted,
     eddRaw,
+    conceptionDate,
     aogWeeks,
     aogDays,
     aogFormatted,
