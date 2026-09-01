@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Patient, Appointment } from '../types/patient';
 import { X, Calendar, UserCheck, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
@@ -38,6 +38,19 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
   const [appointmentTime, setAppointmentTime] = useState<string>('09:30 AM');
   const [appointmentType, setAppointmentType] = useState<Appointment['type']>('Routine Prenatal');
   const [notes, setNotes] = useState<string>('');
+
+  useEffect(() => {
+    if (isOpen) {
+      if (defaultDate) {
+        setAppointmentDate(defaultDate);
+      } else {
+        setAppointmentDate(format(new Date(), 'yyyy-MM-dd'));
+      }
+      if (patients.length > 0 && !selectedPatientId) {
+        setSelectedPatientId(patients[0].id);
+      }
+    }
+  }, [isOpen, defaultDate, patients, selectedPatientId]);
 
   if (!isOpen) return null;
 
