@@ -127,11 +127,13 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
   const [doctorName, setDoctorName] = useState(
     currentUser.fullName.startsWith('Dr.') ? currentUser.fullName : `Dr. ${currentUser.fullName}, MD`
   );
-  const [doctorTitle, setDoctorTitle] = useState('Obstetrics & Gynecology - Maternal & Fetal Medicine');
+  const [doctorTitle, setDoctorTitle] = useState(
+    currentUser.title || 'General Medicine & Multi-Specialty Clinical Practice'
+  );
   const [prcNumber, setPrcNumber] = useState('0098765');
   const [ptrNumber, setPtrNumber] = useState('1234567');
   const [s2Number, setS2Number] = useState('9876-54321-ABCD');
-  const clinicName = 'MaternalCare OB-GYN Specialist Clinic';
+  const clinicName = 'Medical Management & Clinical Consultation Center';
   const clinicAddress = "Suite 402, St. Luke's Medical Tower, Medical Drive, Metro Manila";
   const clinicContact = 'Tel: (02) 8888-1234 • Mobile: +63 917 123 4567';
 

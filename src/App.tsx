@@ -10,7 +10,7 @@ import { AddAppointmentModal } from './components/AddAppointmentModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { ManageStaffModal } from './components/ManageStaffModal';
 import { LoginScreen } from './components/LoginScreen';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, PanelLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   exportClinicDatabaseToExcel,
@@ -522,6 +522,7 @@ export function App() {
                 selectedPatientId={selectedPatientId}
                 onSelectPatient={handleSelectPatient}
                 onAddPatientClick={() => setIsAddPatientModalOpen(true)}
+                onToggleCollapse={() => setIsSidebarListVisible(false)}
               />
             </div>
 
@@ -531,26 +532,19 @@ export function App() {
                 mobileView === 'details' ? 'block' : 'hidden md:block'
               }`}
             >
-              {/* Desktop Floating Toggle Button to Hide / Show Directory List */}
-              <div className="hidden md:block absolute top-3.5 left-4 z-30">
-                <button
-                  onClick={() => setIsSidebarListVisible(!isSidebarListVisible)}
-                  className="bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-teal-800 border border-slate-200 shadow-sm px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition active:scale-95 cursor-pointer backdrop-blur-xs"
-                  title={isSidebarListVisible ? 'Hide Patient Directory for Full-Width View' : 'Show Patient Directory List'}
-                >
-                  {isSidebarListVisible ? (
-                    <>
-                      <span className="text-teal-600 font-bold">◀</span>
-                      <span className="text-[11px]">Hide List</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-teal-600 font-bold">▶</span>
-                      <span className="text-[11px] font-bold text-teal-900">Show Patients ({patients.length})</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              {/* Desktop Floating Icon-Only Toggle Button to Show Directory List When Hidden */}
+              {!isSidebarListVisible && (
+                <div className="hidden md:block absolute top-3.5 left-4 z-30 animate-in fade-in zoom-in duration-150">
+                  <button
+                    type="button"
+                    onClick={() => setIsSidebarListVisible(true)}
+                    className="p-2 bg-white/95 hover:bg-teal-50 text-slate-700 hover:text-teal-800 border border-slate-200 hover:border-teal-300 shadow-md rounded-xl transition active:scale-95 cursor-pointer backdrop-blur-xs flex items-center justify-center group"
+                    title={`Show Patients Directory (${patients.length})`}
+                  >
+                    <PanelLeft className="w-4 h-4 text-teal-700 group-hover:scale-110 transition" />
+                  </button>
+                </div>
+              )}
 
               {selectedPatient ? (
                 <PatientDetails

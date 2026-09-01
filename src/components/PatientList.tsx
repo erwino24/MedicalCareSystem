@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import type { Patient } from '../types/patient';
 import { calculateObGynMetrics } from '../utils/obgynCalculator';
-import { Search, UserPlus, Calendar, ChevronRight, Baby } from 'lucide-react';
+import { Search, UserPlus, Calendar, ChevronRight, Baby, PanelLeftClose } from 'lucide-react';
 
 interface PatientListProps {
   patients: Patient[];
   selectedPatientId: string | null;
   onSelectPatient: (patientId: string) => void;
   onAddPatientClick: () => void;
+  onToggleCollapse?: () => void;
 }
 
 export const PatientList: React.FC<PatientListProps> = ({
@@ -15,6 +16,7 @@ export const PatientList: React.FC<PatientListProps> = ({
   selectedPatientId,
   onSelectPatient,
   onAddPatientClick,
+  onToggleCollapse,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCareType, setFilterCareType] = useState<string>('ALL');
@@ -60,6 +62,16 @@ export const PatientList: React.FC<PatientListProps> = ({
               {sortedPatients.length} {sortedPatients.length === 1 ? 'Patient' : 'Patients'}
             </span>
           </div>
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              className="hidden md:flex p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/80 rounded-lg transition cursor-pointer"
+              title="Collapse Patients Directory (Full-Width View)"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Search Input */}

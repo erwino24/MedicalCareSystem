@@ -109,21 +109,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-white border border-teal-200 shadow-2xs flex items-center justify-center shrink-0 group-hover:scale-105 transition p-0.5 overflow-hidden">
               <img
                 src="/icon-svg.svg"
-                alt="MaternalCare OB-GYN Logo"
+                alt="Medical Management System Logo"
                 className="w-full h-full object-contain"
               />
             </div>
             <div className="min-w-0">
               <div className="flex items-center space-x-1.5 sm:space-x-2">
                 <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-800 tracking-tight whitespace-nowrap group-hover:text-teal-800 transition">
-                  MaternalCare <span className="text-teal-700 font-extrabold">OB-GYN</span>
+                  Medical <span className="text-teal-700 font-extrabold">Management System</span>
                 </h1>
                 <span className="bg-teal-50 text-teal-700 text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border border-teal-200 hidden xl:inline-flex shrink-0">
-                  {isNurse ? 'Clinical Assistant' : 'Lead Doctor'}
+                  {isNurse ? 'Clinical Assistant' : 'Medical Doctor'}
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-500 hidden md:block truncate">
-                Obstetrics & Gynecology Patient Management System
+                Comprehensive Patient & Clinical Practice Management
               </p>
             </div>
           </button>

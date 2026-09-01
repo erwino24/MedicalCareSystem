@@ -123,8 +123,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
               {isNurse
-                ? 'Manage patient intake, schedule prenatal visits, and monitor high-gestational-age triage queues.'
-                : 'Review active obstetric patients, monitor near-term deliveries, check today’s consultation schedule, and issue prescriptions.'}
+                ? 'Manage patient intake, schedule clinical appointments, monitor vitals, and coordinate care triage queues.'
+                : 'Review patient directories across all specialties (OB-GYN, Pediatric, Anti-Rabies, Vaccines, Dengue & Chronic Care), oversee consultations, and issue prescriptions.'}
             </p>
           </div>
 

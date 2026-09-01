@@ -116,13 +116,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ users, onLoginSuccess,
           <div className="w-18 h-18 mx-auto shadow-md rounded-full flex items-center justify-center p-1 bg-white border border-teal-200">
             <img
               src="/icon-svg.svg"
-              alt="MaternalCare OB-GYN Logo"
+              alt="Medical Management System Logo"
               className="w-full h-full object-contain drop-shadow-xs"
             />
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-3">MaternalCare OB-GYN</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-3">Medical Management System</h1>
           <p className="text-xs text-slate-500 font-medium">
-            {isRegisterMode ? 'Staff Registration • Practitioner Portal' : 'Clinic Management System • Secured Portal'}
+            {isRegisterMode ? 'Staff Registration • Practitioner Portal' : 'Patient & Clinical Practice Portal • Secured'}
           </p>
         </div>
 
