@@ -11,7 +11,6 @@ import {
   Sparkles,
   ShieldCheck,
   FileCheck,
-  Calendar,
   Phone,
   MapPin,
   Check
@@ -125,7 +124,6 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
   const todayStr = format(new Date(), 'MMMM d, yyyy');
 
   // Doctor Details
-  const isDoctor = currentUser.role === 'DOCTOR';
   const [doctorName, setDoctorName] = useState(
     currentUser.fullName.startsWith('Dr.') ? currentUser.fullName : `Dr. ${currentUser.fullName}, MD`
   );
@@ -133,9 +131,9 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
   const [prcNumber, setPrcNumber] = useState('0098765');
   const [ptrNumber, setPtrNumber] = useState('1234567');
   const [s2Number, setS2Number] = useState('9876-54321-ABCD');
-  const [clinicName, setClinicName] = useState('MaternalCare OB-GYN Specialist Clinic');
-  const [clinicAddress, setClinicAddress] = useState('Suite 402, St. Luke\'s Medical Tower, Medical Drive, Metro Manila');
-  const [clinicContact, setClinicContact] = useState('Tel: (02) 8888-1234 • Mobile: +63 917 123 4567');
+  const clinicName = 'MaternalCare OB-GYN Specialist Clinic';
+  const clinicAddress = "Suite 402, St. Luke's Medical Tower, Medical Drive, Metro Manila";
+  const clinicContact = 'Tel: (02) 8888-1234 • Mobile: +63 917 123 4567';
 
   // Prescription Items State
   const initialItems: PrescriptionItem[] = checkup?.prescriptions && checkup.prescriptions.length > 0

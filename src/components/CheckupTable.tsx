@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { CheckupRecord } from '../types/patient';
 import { format } from 'date-fns';
-import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert, Printer, Pill } from 'lucide-react';
+import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert, Printer } from 'lucide-react';
 
 interface CheckupTableProps {
   checkups: CheckupRecord[];
