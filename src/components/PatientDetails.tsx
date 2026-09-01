@@ -182,6 +182,16 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
     });
   };
 
+  const handleUpdateCheckup = (updatedCheckup: CheckupRecord) => {
+    const updated = patient.checkups.map((c) =>
+      c.id === updatedCheckup.id ? updatedCheckup : c
+    );
+    onUpdatePatient({
+      ...patient,
+      checkups: updated,
+    });
+  };
+
   const handleOpenPrescriptionModal = (checkup?: CheckupRecord) => {
     setActiveCheckupForPrescription(checkup || null);
     setIsPrescriptionOpen(true);
@@ -1009,6 +1019,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
         <CheckupTable
           checkups={patient.checkups}
           onAddCheckup={handleAddCheckup}
+          onUpdateCheckup={handleUpdateCheckup}
           onDeleteCheckup={handleDeleteCheckup}
           currentUserRole={currentUserRole}
           onOpenPrescription={handleOpenPrescriptionModal}

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import type { CheckupRecord } from '../types/patient';
 import { format } from 'date-fns';
-import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert, Printer } from 'lucide-react';
+import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert, Printer, Pencil, X, Check, Edit3 } from 'lucide-react';
 
 interface CheckupTableProps {
   checkups: CheckupRecord[];
   onAddCheckup: (newCheckup: Omit<CheckupRecord, 'id'>) => void;
+  onUpdateCheckup?: (updatedCheckup: CheckupRecord) => void;
   onDeleteCheckup?: (checkupId: string) => void;
   currentUserRole?: 'DOCTOR' | 'NURSE';
   onOpenPrescription?: (checkup?: CheckupRecord) => void;
@@ -15,6 +16,7 @@ interface CheckupTableProps {
 export const CheckupTable: React.FC<CheckupTableProps> = ({
   checkups,
   onAddCheckup,
+  onUpdateCheckup,
   onDeleteCheckup,
   currentUserRole = 'DOCTOR',
   onOpenPrescription,
@@ -36,7 +38,58 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
+  // Edit Modal State (Accessible by both Doctor and Nurse)
+  const [editingCheckup, setEditingCheckup] = useState<CheckupRecord | null>(null);
+  const [editDate, setEditDate] = useState<string>('');
+  const [editFee, setEditFee] = useState<string>('');
+  const [editBp, setEditBp] = useState<string>('');
+  const [editWeight, setEditWeight] = useState<string>('');
+  const [editFhr, setEditFhr] = useState<string>('');
+  const [editFundalHeight, setEditFundalHeight] = useState<string>('');
+  const [editDiagnosis, setEditDiagnosis] = useState<string>('');
+  const [editProcedure, setEditProcedure] = useState<string>('');
+  const [editFollowUp, setEditFollowUp] = useState<string>('');
+  const [editNotes, setEditNotes] = useState<string>('');
+
   const totalFees = checkups.reduce((sum, c) => sum + (c.fee || 0), 0);
+
+  const handleStartEdit = (rec: CheckupRecord) => {
+    setEditingCheckup(rec);
+    setEditDate(rec.date || todayDate);
+    setEditFee(rec.fee !== undefined ? String(rec.fee) : '');
+    setEditBp(rec.bp || '');
+    setEditWeight(rec.weightKg !== undefined ? String(rec.weightKg) : '');
+    setEditFhr(rec.fhrBpm !== undefined ? String(rec.fhrBpm) : '');
+    setEditFundalHeight(rec.fundalHeightCm !== undefined ? String(rec.fundalHeightCm) : '');
+    setEditDiagnosis(rec.diagnosis || '');
+    setEditProcedure(rec.procedure || '');
+    setEditFollowUp(rec.followUpDate || '');
+    setEditNotes(rec.notes || '');
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCheckup || !onUpdateCheckup) return;
+
+    const updated: CheckupRecord = {
+      ...editingCheckup,
+      date: editDate || editingCheckup.date,
+      fee: editFee ? parseFloat(editFee) : undefined,
+      bp: editBp || undefined,
+      weightKg: editWeight ? parseFloat(editWeight) : undefined,
+      fhrBpm: editFhr ? parseInt(editFhr, 10) : undefined,
+      fundalHeightCm: editFundalHeight ? parseFloat(editFundalHeight) : undefined,
+      diagnosis: editDiagnosis.trim() || editingCheckup.diagnosis,
+      procedure: editProcedure.trim() || editingCheckup.procedure,
+      followUpDate: editFollowUp || editingCheckup.followUpDate,
+      notes: editNotes.trim() || undefined,
+    };
+
+    onUpdateCheckup(updated);
+    setEditingCheckup(null);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2500);
+  };
 
   React.useEffect(() => {
     if (defaultDate) {
@@ -284,6 +337,15 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                     )}
                   </div>
                     <div className="flex items-center space-x-1.5">
+                      {/* Edit button for both Doctor and Nurse */}
+                      <button
+                        onClick={() => handleStartEdit(rec)}
+                        className="text-teal-700 hover:text-teal-900 p-1 hover:bg-teal-50 rounded transition"
+                        title="Edit checkup details"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
                       {!isNurse && onOpenPrescription && (
                         <button
                           onClick={() => onOpenPrescription(rec)}
@@ -348,7 +410,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                 <th className="py-3 px-3 min-w-[190px]">Procedure & Rx</th>
                 <th className="py-3 px-3 w-[110px]">Fee (₱)</th>
                 <th className="py-3 px-3 w-[110px]">Follow-up</th>
-                <th className="py-3 px-4 w-[120px] text-right">Action</th>
+                <th className="py-3 px-4 w-[130px] text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -517,6 +579,15 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
 
                     <td className="py-3.5 px-4 align-top text-right">
                       <div className="flex items-center justify-end space-x-1">
+                        {/* Edit Consultation Details (Both Doctor and Nurse) */}
+                        <button
+                          onClick={() => handleStartEdit(rec)}
+                          className="p-1.5 text-slate-500 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition cursor-pointer"
+                          title="Edit consultation details (Doctor & Nurse)"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+
                         {!isNurse && onOpenPrescription && (
                           <button
                             onClick={() => onOpenPrescription(rec)}
@@ -533,7 +604,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                             </span>
                           </button>
                         )}
-                        {!isNurse && onDeleteCheckup ? (
+                        {!isNurse && onDeleteCheckup && (
                           <button
                             onClick={() => onDeleteCheckup(rec.id)}
                             className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer"
@@ -541,12 +612,6 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
-                        ) : (
-                          isNurse && (
-                            <span className="text-[10px] text-slate-400 italic bg-slate-50 px-2 py-1 rounded">
-                              Triage Logged
-                            </span>
-                          )
                         )}
                       </div>
                     </td>
@@ -556,6 +621,177 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
             </tbody>
         </table>
       </div>
+
+      {/* EDIT CONSULTATION RECORD MODAL (Doctor & Nurse) */}
+      {editingCheckup && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 bg-teal-100 text-teal-700 rounded-xl">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Edit Consultation Record</h3>
+                  <p className="text-xs text-slate-500">
+                    Update clinical notes, vitals, diagnosis, fee, or follow-up date
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingCheckup(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="mt-4 space-y-4">
+              {/* Row: Date & Fee */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Consultation Date</label>
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-teal-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Consultation Fee (₱ PHP)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={editFee}
+                      onChange={(e) => setEditFee(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-3 py-2 text-xs font-bold text-emerald-900 focus:bg-white focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Row: Vitals (BP, Weight, FHR, Fundal) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">BP (e.g. 120/80)</label>
+                  <input
+                    type="text"
+                    placeholder="120/80"
+                    value={editBp}
+                    onChange={(e) => setEditBp(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:bg-white focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Weight (kg)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="60.0"
+                    value={editWeight}
+                    onChange={(e) => setEditWeight(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:bg-white focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">FHR (bpm)</label>
+                  <input
+                    type="number"
+                    placeholder="140"
+                    value={editFhr}
+                    onChange={(e) => setEditFhr(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-teal-800 focus:bg-white focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">Fundal Ht (cm)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    placeholder="28"
+                    value={editFundalHeight}
+                    onChange={(e) => setEditFundalHeight(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:bg-white focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              {/* Diagnosis */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Diagnosis / Clinical Assessment <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={editDiagnosis}
+                  onChange={(e) => setEditDiagnosis(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:bg-white focus:ring-2 focus:ring-teal-500 font-medium resize-none"
+                  required
+                />
+              </div>
+
+              {/* Procedure / Treatment */}
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Procedure, Treatment & Prescriptions <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={editProcedure}
+                  onChange={(e) => setEditProcedure(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs focus:bg-white focus:ring-2 focus:ring-teal-500 resize-none"
+                  required
+                />
+              </div>
+
+              {/* Row: Follow-up & Notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Next Follow-up Date</label>
+                  <input
+                    type="date"
+                    value={editFollowUp}
+                    onChange={(e) => setEditFollowUp(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Additional Notes</label>
+                  <input
+                    type="text"
+                    placeholder="Patient instructions / reminders"
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:bg-white focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-2.5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingCheckup(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs shadow-md transition flex items-center space-x-1.5 active:scale-95 cursor-pointer"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
