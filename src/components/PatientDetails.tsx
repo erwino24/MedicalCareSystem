@@ -17,7 +17,11 @@ import {
   FileText,
   Printer,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 interface PatientDetailsProps {
@@ -42,6 +46,8 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
   const [isPrescriptionOpen, setIsPrescriptionOpen] = useState(false);
   const [activeCheckupForPrescription, setActiveCheckupForPrescription] = useState<CheckupRecord | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isOverviewExpanded, setIsOverviewExpanded] = useState(true);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
 
   // Editable Form State
   const [fullName, setFullName] = useState(patient.fullName);
@@ -213,8 +219,25 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
               </div>
             </div>
 
-            {/* Actions: Prescribe Rx & Inline Edit Toggle Button & Doctor-Only Delete */}
+            {/* Actions: Prescribe Rx & Inline Edit Toggle Button & Doctor-Only Delete & Hide/Show Toggle */}
             <div className="flex items-center space-x-2 self-start sm:self-center flex-wrap gap-y-2">
+              {/* Hide / Show Overview Toggle Button */}
+              {!isEditing && (
+                <button
+                  onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
+                  className={`text-xs px-3 py-2 rounded-xl border flex items-center space-x-1.5 transition shadow-2xs cursor-pointer active:scale-95 ${
+                    isOverviewExpanded
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                      : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200 font-semibold ring-1 ring-teal-400'
+                  }`}
+                  title={isOverviewExpanded ? 'Collapse Overview & Gestational Box' : 'Expand Overview & Gestational Box'}
+                >
+                  {isOverviewExpanded ? <EyeOff className="w-3.5 h-3.5 text-slate-500" /> : <Eye className="w-3.5 h-3.5 text-teal-600" />}
+                  <span>{isOverviewExpanded ? 'Hide Info' : 'Show Info'}</span>
+                  {isOverviewExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-teal-600" />}
+                </button>
+              )}
+
               {!isNurse && (
                 <button
                   onClick={() => handleOpenPrescriptionModal()}
@@ -410,124 +433,169 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                 </p>
               </div>
             </form>
-          ) : (
-            /* READ ONLY VIEW MODE */
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
-                  <Phone className="w-3 h-3 text-slate-400" />
-                  <span>Contact</span>
-                </span>
-                <p className="font-semibold text-slate-800">{patient.contactNumber}</p>
-                <p className="text-[11px] text-slate-500 truncate">{patient.email}</p>
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
-                  <ShieldAlert className="w-3 h-3 text-slate-400" />
-                  <span>Emergency Contact</span>
-                </span>
-                <p className="font-medium text-slate-800">{patient.emergencyContact}</p>
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
-                  <Heart className="w-3 h-3 text-rose-500" />
-                  <span>Blood Type & Allergies</span>
-                </span>
-                <p className="font-bold text-slate-800">Type: {patient.bloodType}</p>
-                <p className="text-[11px] text-rose-600 font-medium">{patient.allergies || 'No known drug allergies'}</p>
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
-                  <Calendar className="w-3 h-3 text-teal-600" />
-                  <span>LMP (Last Menstrual Period)</span>
-                </span>
-                <p className="font-bold text-teal-900 text-sm">{patient.lmp || 'Not Set'}</p>
-              </div>
-            </div>
-          )}
-
-          {/* AUTO-COMPUTE FEATURE METRICS BAR */}
-          <div className="mt-5 bg-gradient-to-r from-teal-700 via-cyan-700 to-teal-800 text-white rounded-2xl p-4 sm:p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3 border-b border-teal-600/50 pb-2">
-              <div className="flex items-center space-x-2">
-                <Baby className="w-5 h-5 text-teal-200" />
-                <h3 className="font-bold text-sm text-teal-50 tracking-wide uppercase">
-                  Gestational Auto-Calculations (LMP + 280 Days)
-                </h3>
-              </div>
-              <span className="text-[11px] bg-teal-600/60 text-teal-100 px-2.5 py-0.5 rounded-full border border-teal-500/50 font-mono">
-                Live Auto-Computed
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
-              <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
-                <span className="text-xs text-teal-200 font-medium block">AOG (Age of Gestation)</span>
-                <p className="text-xl sm:text-2xl font-extrabold text-white mt-0.5">
-                  {obgynMetrics.aogFormatted}
-                </p>
-                <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
-                  {obgynMetrics.aogWeeks} weeks + {obgynMetrics.aogDays} days
-                </span>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
-                <span className="text-xs text-teal-200 font-medium block">EDD (Estimated Due Date)</span>
-                <p className="text-xl sm:text-2xl font-extrabold text-white mt-0.5">
-                  {obgynMetrics.edd}
-                </p>
-                <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
-                  Naegele's Rule (+280 Days)
-                </span>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
-                <span className="text-xs text-teal-200 font-medium block">Trimester Stage</span>
-                <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
-                  <span className="bg-white text-teal-900 font-black text-sm px-3 py-1 rounded-lg shadow-2xs">
-                    {obgynMetrics.trimester} Trimester
+          ) : isOverviewExpanded ? (
+            /* READ ONLY EXPANDED VIEW MODE */
+            <div className="animate-in fade-in duration-150">
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
+                    <Phone className="w-3 h-3 text-slate-400" />
+                    <span>Contact</span>
                   </span>
-                  <span className="text-[11px] text-teal-100">
-                    {obgynMetrics.daysRemaining} days remaining
+                  <p className="font-semibold text-slate-800">{patient.contactNumber}</p>
+                  <p className="text-[11px] text-slate-500 truncate">{patient.email}</p>
+                </div>
+
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
+                    <ShieldAlert className="w-3 h-3 text-slate-400" />
+                    <span>Emergency Contact</span>
                   </span>
+                  <p className="font-medium text-slate-800">{patient.emergencyContact}</p>
+                </div>
+
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
+                    <Heart className="w-3 h-3 text-rose-500" />
+                    <span>Blood Type & Allergies</span>
+                  </span>
+                  <p className="font-bold text-slate-800">Type: {patient.bloodType}</p>
+                  <p className="text-[11px] text-rose-600 font-medium">{patient.allergies || 'No known drug allergies'}</p>
+                </div>
+
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
+                    <Calendar className="w-3 h-3 text-teal-600" />
+                    <span>LMP (Last Menstrual Period)</span>
+                  </span>
+                  <p className="font-bold text-teal-900 text-sm">{patient.lmp || 'Not Set'}</p>
+                </div>
+              </div>
+
+              {/* AUTO-COMPUTE FEATURE METRICS BAR */}
+              <div className="mt-5 bg-gradient-to-r from-teal-700 via-cyan-700 to-teal-800 text-white rounded-2xl p-4 sm:p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3 border-b border-teal-600/50 pb-2">
+                  <div className="flex items-center space-x-2">
+                    <Baby className="w-5 h-5 text-teal-200" />
+                    <h3 className="font-bold text-sm text-teal-50 tracking-wide uppercase">
+                      Gestational Auto-Calculations (LMP + 280 Days)
+                    </h3>
+                  </div>
+                  <span className="text-[11px] bg-teal-600/60 text-teal-100 px-2.5 py-0.5 rounded-full border border-teal-500/50 font-mono">
+                    Live Auto-Computed
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
+                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                    <span className="text-xs text-teal-200 font-medium block">AOG (Age of Gestation)</span>
+                    <p className="text-xl sm:text-2xl font-extrabold text-white mt-0.5">
+                      {obgynMetrics.aogFormatted}
+                    </p>
+                    <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
+                      {obgynMetrics.aogWeeks} weeks + {obgynMetrics.aogDays} days
+                    </span>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                    <span className="text-xs text-teal-200 font-medium block">EDD (Estimated Due Date)</span>
+                    <p className="text-xl sm:text-2xl font-extrabold text-white mt-0.5">
+                      {obgynMetrics.edd}
+                    </p>
+                    <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
+                      Naegele's Rule (+280 Days)
+                    </span>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                    <span className="text-xs text-teal-200 font-medium block">Trimester Stage</span>
+                    <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
+                      <span className="bg-white text-teal-900 font-black text-sm px-3 py-1 rounded-lg shadow-2xs">
+                        {obgynMetrics.trimester} Trimester
+                      </span>
+                      <span className="text-[11px] text-teal-100">
+                        {obgynMetrics.daysRemaining} days remaining
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            /* COMPACT COLLAPSED SUMMARY STRIP */
+            <div
+              onClick={() => setIsOverviewExpanded(true)}
+              className="mt-4 p-3 bg-slate-50 hover:bg-teal-50/50 border border-slate-200 hover:border-teal-300 rounded-xl transition flex items-center justify-between gap-3 text-xs cursor-pointer group"
+              title="Click to expand full patient overview & gestational calculations"
+            >
+              <div className="flex items-center space-x-3 sm:space-x-4 flex-wrap gap-y-1">
+                <span className="font-bold text-teal-900 flex items-center space-x-1">
+                  <Baby className="w-3.5 h-3.5 text-teal-600 inline" />
+                  <span>AOG: <strong>{obgynMetrics.aogFormatted}</strong></span>
+                </span>
+                <span className="text-slate-300 hidden sm:inline">•</span>
+                <span className="text-slate-700">EDD: <strong>{obgynMetrics.edd}</strong></span>
+                <span className="text-slate-300 hidden sm:inline">•</span>
+                <span className="bg-teal-100 text-teal-800 font-semibold px-2 py-0.2 rounded">
+                  {obgynMetrics.trimester} Trimester
+                </span>
+                <span className="text-slate-300 hidden md:inline">•</span>
+                <span className="text-slate-500 hidden md:inline">Contact: {patient.contactNumber}</span>
+              </div>
+              <div className="flex items-center space-x-1 text-teal-700 font-semibold text-[11px] group-hover:underline shrink-0">
+                <span>Show Full Cards</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* SUB-HEADER: ILLNESS HISTORY TEXTAREA */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
-          <div className="flex items-center space-x-2 mb-2">
-            <FileText className="w-4 h-4 text-teal-600" />
-            <h3 className="text-sm font-bold text-slate-800">Illness & Medical History</h3>
-            {isNurse && (
-              <span className="text-[10px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 font-medium">
-                Doctor Managed
-              </span>
-            )}
-          </div>
-          <textarea
-            rows={3}
-            value={isEditing ? illnessHistory : patient.illnessHistory}
-            disabled={!isEditing || isNurse}
-            onChange={(e) => setIllnessHistory(e.target.value)}
-            placeholder="Document past medical conditions, surgical history, or high-risk factors..."
-            className={`w-full text-xs rounded-lg p-3 leading-relaxed transition ${
-              isEditing && !isNurse
-                ? 'bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-teal-500'
-                : 'bg-slate-50/70 border border-slate-200 text-slate-700 cursor-not-allowed'
-            }`}
-          />
-          {!isEditing && (
-            <p className="text-[11px] text-slate-400 mt-1 italic">
-              {isNurse
-                ? 'Medical history is managed and updated by the Lead Obstetrician.'
-                : 'Click "Edit Patient Info" above to modify illness history notes.'}
-            </p>
+        {/* SUB-HEADER: ILLNESS HISTORY TEXTAREA (COLLAPSIBLE) */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs transition">
+          <button
+            type="button"
+            onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+            className="w-full flex items-center justify-between text-left focus:outline-none cursor-pointer group"
+          >
+            <div className="flex items-center space-x-2">
+              <FileText className="w-4 h-4 text-teal-600" />
+              <h3 className="text-sm font-bold text-slate-800 group-hover:text-teal-700 transition">
+                Illness & Medical History
+              </h3>
+              {isNurse && (
+                <span className="text-[10px] bg-amber-50 text-amber-800 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                  Doctor Managed
+                </span>
+              )}
+            </div>
+            <div className="flex items-center space-x-1 text-xs text-slate-400 group-hover:text-slate-700">
+              <span className="text-[11px]">{isHistoryExpanded ? 'Hide' : 'Show'}</span>
+              {isHistoryExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </div>
+          </button>
+
+          {(isHistoryExpanded || isEditing) && (
+            <div className="mt-3 animate-in fade-in duration-150">
+              <textarea
+                rows={3}
+                value={isEditing ? illnessHistory : patient.illnessHistory}
+                disabled={!isEditing || isNurse}
+                onChange={(e) => setIllnessHistory(e.target.value)}
+                placeholder="Document past medical conditions, surgical history, or high-risk factors..."
+                className={`w-full text-xs rounded-lg p-3 leading-relaxed transition ${
+                  isEditing && !isNurse
+                    ? 'bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-teal-500'
+                    : 'bg-slate-50/70 border border-slate-200 text-slate-700 cursor-not-allowed'
+                }`}
+              />
+              {!isEditing && (
+                <p className="text-[11px] text-slate-400 mt-1 italic">
+                  {isNurse
+                    ? 'Medical history is managed and updated by the Lead Obstetrician.'
+                    : 'Click "Edit Info" above to modify illness history notes.'}
+                </p>
+              )}
+            </div>
           )}
         </div>
 
