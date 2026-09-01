@@ -5,7 +5,6 @@ import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, getDay } fr
 import {
   Users,
   Baby,
-  HeartPulse,
   Calendar,
   Clock,
   Stethoscope,
@@ -13,12 +12,12 @@ import {
   ChevronRight,
   ChevronLeft,
   Search,
-  Sparkles,
   Check,
   CheckCircle2,
   MessageSquare,
   Eye,
-  EyeOff
+  EyeOff,
+  Wallet
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -105,6 +104,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     (acc, p) => acc + p.checkups.reduce((sub, c) => sub + (c.fee || 0), 0),
     0
   );
+  const todayRevenuePhp = patients.reduce(
+    (acc, p) =>
+      acc +
+      p.checkups
+        .filter((c) => c.date === todayStr)
+        .reduce((sub, c) => sub + (c.fee || 0), 0),
+    0
+  );
 
   return (
     <div className="h-full w-full flex-1 flex flex-col bg-slate-50 overflow-y-auto font-sans">
@@ -112,13 +119,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* HERO WELCOME BANNER */}
         <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white rounded-2xl p-6 sm:p-7 shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-56 h-56 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="relative z-10 space-y-2 max-w-2xl">
-            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <span className="bg-teal-500/20 text-teal-300 text-xs px-3 py-1 rounded-full font-semibold border border-teal-500/30 flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-teal-300" />
-                <span>{isNurse ? 'Clinical Assistant Portal' : 'Lead Obstetrician Clinical Dashboard'}</span>
+          <div className="space-y-1.5 max-w-2xl relative z-10">
+            <div className="flex items-center space-x-2">
+              <span className="bg-teal-500/20 text-teal-300 border border-teal-500/30 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
+                {isNurse ? '🩺 Nurse / Clinical Assistant Desk' : '👨‍⚕️ Medical Doctor Practice Dashboard'}
               </span>
-              <span className="text-xs text-slate-400 font-mono">{todayFormatted}</span>
+              <span className="text-slate-400 text-xs hidden sm:inline">•</span>
+              <span className="text-slate-400 text-xs font-mono hidden sm:inline">
+                {todayFormatted}
+              </span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -222,24 +231,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Card 4: Consultations & Collections */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+          {/* Card 4: Total Earnings (₱) */}
+          <div className="bg-gradient-to-br from-emerald-500/10 via-teal-50/70 to-white p-5 rounded-2xl border border-emerald-300 shadow-2xs hover:border-emerald-500 transition">
             <div className="flex items-center justify-between">
-              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                <HeartPulse className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="p-3 bg-emerald-600 text-white rounded-xl shadow-xs">
+                <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                Peso (₱)
+              <span className="text-[11px] font-bold text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs font-mono">
+                PHP (₱)
               </span>
             </div>
             <div className="mt-3">
-              <p className="text-xs text-slate-500 font-medium">Consultations & Fees</p>
-              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">
-                {totalConsultationsRecorded}
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Earnings</p>
+              <p className="text-2xl sm:text-3xl font-black text-emerald-950 font-mono mt-0.5">
+                ₱{totalRevenuePhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
-              <p className="text-[11px] text-emerald-700 font-bold mt-1 font-mono">
-                {totalRevenuePhp > 0 ? `₱${totalRevenuePhp.toLocaleString('en-PH', { minimumFractionDigits: 2 })} Total Collected` : 'Fee Tracking Active'}
-              </p>
+              <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1 font-medium">
+                <span>{totalConsultationsRecorded} Consultations</span>
+                {todayRevenuePhp > 0 ? (
+                  <span className="text-emerald-700 font-bold font-mono">
+                    +₱{todayRevenuePhp.toLocaleString('en-PH', { minimumFractionDigits: 2 })} today
+                  </span>
+                ) : (
+                  <span className="text-slate-400">Total Billed</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
