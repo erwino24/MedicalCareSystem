@@ -178,9 +178,47 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
   };
 
   const handleSavePrescription = (checkupId: string, items: PrescriptionItem[]) => {
-    const updatedCheckups = patient.checkups.map((c) =>
-      c.id === checkupId ? { ...c, prescriptions: items } : c
-    );
+    let updatedCheckups = patient.checkups;
+    const rxSummary = items.length > 0 ? `℞ Meds: ${items.map((i) => i.genericName).join(', ')}` : '';
+
+    if (checkupId && patient.checkups.some((c) => c.id === checkupId)) {
+      updatedCheckups = patient.checkups.map((c) => {
+        if (c.id === checkupId) {
+          return {
+            ...c,
+            procedure: c.procedure ? (c.procedure.includes('℞ Meds:') ? c.procedure.replace(/℞ Meds:.*$/, rxSummary).trim() : `${c.procedure} • ${rxSummary}`) : rxSummary,
+            prescriptions: items,
+          };
+        }
+        return c;
+      });
+    } else if (patient.checkups.length > 0) {
+      // Attach to most recent checkup record
+      const latest = patient.checkups[0];
+      const mergedProcedure = latest.procedure
+        ? (latest.procedure.includes('℞ Meds:') ? latest.procedure.replace(/℞ Meds:.*$/, rxSummary).trim() : `${latest.procedure} • ${rxSummary}`)
+        : rxSummary;
+
+      updatedCheckups = [
+        { ...latest, procedure: mergedProcedure || latest.procedure, prescriptions: items },
+        ...patient.checkups.slice(1),
+      ];
+    } else {
+      // Create new checkup entry for today
+      const newRecord: CheckupRecord = {
+        id: `chk-${Date.now()}`,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        bp: '120/80',
+        weightKg: undefined,
+        fhrBpm: undefined,
+        diagnosis: 'Routine OB-GYN Consultation',
+        procedure: rxSummary || 'Consultation & Prescriptions Issued',
+        prescriptions: items,
+        followUpDate: 'As scheduled',
+      };
+      updatedCheckups = [newRecord];
+    }
+
     onUpdatePatient({
       ...patient,
       checkups: updatedCheckups,

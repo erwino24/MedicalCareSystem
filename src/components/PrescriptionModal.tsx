@@ -203,14 +203,20 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
   };
 
   const handlePrint = () => {
+    // Automatically save prescription data to patient checkup record so we have permanent records!
+    if (onSavePrescription) {
+      onSavePrescription(checkup?.id || '', prescriptionList);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    }
     window.print();
   };
 
   const handleSaveToRecord = () => {
-    if (checkup && onSavePrescription) {
-      onSavePrescription(checkup.id, prescriptionList);
+    if (onSavePrescription) {
+      onSavePrescription(checkup?.id || '', prescriptionList);
       setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 2500);
+      setTimeout(() => setSavedSuccess(false), 3000);
     }
   };
 
