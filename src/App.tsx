@@ -295,6 +295,7 @@ export function App() {
   const handleSelectPatients = () => {
     setActiveTab('patients');
     setMobileView('list');
+    setIsSidebarListVisible(true);
   };
 
   const handleSelectSchedule = () => {
@@ -309,6 +310,7 @@ export function App() {
 
   const handleBackToList = () => {
     setMobileView('list');
+    setIsSidebarListVisible(true);
   };
 
   const handleAddPatient = (newPatient: Patient) => {
@@ -510,11 +512,11 @@ export function App() {
             {/* LEFT PANEL: Patient Directory */}
             <div
               className={`h-full shrink-0 border-r border-slate-200 transition-all duration-300 relative ${
-                mobileView === 'list'
+                !isSidebarListVisible
+                  ? 'hidden'
+                  : mobileView === 'list'
                   ? 'w-full block md:w-80 lg:w-96'
-                  : isSidebarListVisible
-                  ? 'hidden md:block md:w-80 lg:w-96'
-                  : 'hidden'
+                  : 'hidden md:block md:w-80 lg:w-96'
               }`}
             >
               <PatientList
@@ -529,7 +531,11 @@ export function App() {
             {/* RIGHT PANEL: Patient Details */}
             <div
               className={`h-full flex-1 overflow-hidden transition-all relative ${
-                mobileView === 'details' ? 'block' : 'hidden md:block'
+                !isSidebarListVisible
+                  ? 'w-full block'
+                  : mobileView === 'details'
+                  ? 'w-full block'
+                  : 'hidden md:block'
               }`}
             >
               {/* Desktop Floating Icon-Only Toggle Button to Show Directory List When Hidden */}
