@@ -19,6 +19,10 @@ export type DiscountType =
 
 export type PaymentMethod =
   | 'Cash'
+  | 'GCash'
+  | 'Maya'
+  | 'PayPal'
+  | 'Bank Transfer'
   | 'HMO / Health Card'
   | 'PhilHealth'
   | 'Free / Waived';
@@ -30,7 +34,9 @@ export interface CheckupRecord {
   grossFee?: number; // Standard / Gross Fee before discount (₱)
   discountType?: DiscountType; // 'None' | 'Senior Citizen (20%)' | 'PWD (20%)' | 'Doctor Courtesy' | 'Custom'
   discountAmount?: number; // Amount discounted in PHP (₱)
-  paymentMethod?: PaymentMethod; // 'Cash' | 'HMO / Health Card' | 'PhilHealth' | 'Free / Waived'
+  paymentMethod?: PaymentMethod; // 'Cash' | 'GCash' | 'Maya' | 'PayPal' | 'Bank Transfer' | 'HMO / Health Card' | 'PhilHealth' | 'Free / Waived'
+  bankName?: string; // e.g. BDO, BPI, Metrobank, UnionBank, Landbank, Security Bank, RCBC, etc.
+  paymentRefNo?: string; // Reference number for GCash, Maya, PayPal, or Bank Transfer
   hmoProvider?: string; // e.g. Maxicare, Medicard, Intellicare, PhilCare, Etiqa, etc.
   hmoApprovalCode?: string; // LOA / Approval Code
   seniorPwdId?: string; // Senior / PWD ID number

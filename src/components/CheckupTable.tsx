@@ -27,6 +27,25 @@ export const COMMON_HMOS = [
   'Other HMO',
 ];
 
+export const COMMON_BANKS = [
+  'BDO Unibank',
+  'BPI (Bank of the Philippine Islands)',
+  'Metrobank',
+  'UnionBank of the Philippines',
+  'Landbank of the Philippines',
+  'Security Bank',
+  'RCBC (Rizal Commercial Banking Corp)',
+  'PNB (Philippine National Bank)',
+  'China Bank',
+  'EastWest Bank',
+  'GoTyme Bank',
+  'Maya Bank',
+  'SeaBank',
+  'Tonik Bank',
+  'CIMB Bank',
+  'Other Bank',
+];
+
 export const CheckupTable: React.FC<CheckupTableProps> = ({
   checkups,
   onAddCheckup,
@@ -45,6 +64,8 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   const [discountType, setDiscountType] = useState<DiscountType>('None');
   const [customDiscount, setCustomDiscount] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
+  const [bankName, setBankName] = useState<string>('BDO Unibank');
+  const [paymentRefNo, setPaymentRefNo] = useState<string>('');
   const [hmoProvider, setHmoProvider] = useState<string>('Maxicare');
   const [hmoApprovalCode, setHmoApprovalCode] = useState<string>('');
   const [seniorPwdId, setSeniorPwdId] = useState<string>('');
@@ -79,6 +100,8 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   const [editDiscountType, setEditDiscountType] = useState<DiscountType>('None');
   const [editCustomDiscount, setEditCustomDiscount] = useState<string>('');
   const [editPaymentMethod, setEditPaymentMethod] = useState<PaymentMethod>('Cash');
+  const [editBankName, setEditBankName] = useState<string>('BDO Unibank');
+  const [editPaymentRefNo, setEditPaymentRefNo] = useState<string>('');
   const [editHmoProvider, setEditHmoProvider] = useState<string>('Maxicare');
   const [editHmoApprovalCode, setEditHmoApprovalCode] = useState<string>('');
   const [editSeniorPwdId, setEditSeniorPwdId] = useState<string>('');
@@ -112,6 +135,8 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
     setEditDiscountType(rec.discountType || 'None');
     setEditCustomDiscount(rec.discountAmount !== undefined ? String(rec.discountAmount) : '');
     setEditPaymentMethod(rec.paymentMethod || 'Cash');
+    setEditBankName(rec.bankName || 'BDO Unibank');
+    setEditPaymentRefNo(rec.paymentRefNo || '');
     setEditHmoProvider(rec.hmoProvider || 'Maxicare');
     setEditHmoApprovalCode(rec.hmoApprovalCode || '');
     setEditSeniorPwdId(rec.seniorPwdId || '');
@@ -138,6 +163,10 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
       discountAmount: editComputedDiscount > 0 ? editComputedDiscount : undefined,
       fee: editGrossFee ? editComputedNetFee : (editingCheckup.fee),
       paymentMethod: editPaymentMethod,
+      bankName: editPaymentMethod === 'Bank Transfer' ? editBankName : undefined,
+      paymentRefNo: (editPaymentMethod === 'GCash' || editPaymentMethod === 'Maya' || editPaymentMethod === 'PayPal' || editPaymentMethod === 'Bank Transfer')
+        ? editPaymentRefNo.trim() || undefined
+        : undefined,
       hmoProvider: editPaymentMethod === 'HMO / Health Card' ? editHmoProvider : undefined,
       hmoApprovalCode: editPaymentMethod === 'HMO / Health Card' ? editHmoApprovalCode.trim() || undefined : undefined,
       seniorPwdId: (editDiscountType === 'Senior Citizen (20%)' || editDiscountType === 'PWD (20%)') ? editSeniorPwdId.trim() || undefined : undefined,
@@ -186,6 +215,10 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
       discountAmount: computedDiscount > 0 ? computedDiscount : undefined,
       fee: grossFee ? computedNetFee : undefined,
       paymentMethod: paymentMethod,
+      bankName: paymentMethod === 'Bank Transfer' ? bankName : undefined,
+      paymentRefNo: (paymentMethod === 'GCash' || paymentMethod === 'Maya' || paymentMethod === 'PayPal' || paymentMethod === 'Bank Transfer')
+        ? paymentRefNo.trim() || undefined
+        : undefined,
       hmoProvider: paymentMethod === 'HMO / Health Card' ? hmoProvider : undefined,
       hmoApprovalCode: paymentMethod === 'HMO / Health Card' ? hmoApprovalCode.trim() || undefined : undefined,
       seniorPwdId: (discountType === 'Senior Citizen (20%)' || discountType === 'PWD (20%)') ? seniorPwdId.trim() || undefined : undefined,
@@ -204,6 +237,8 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
     setDiscountType('None');
     setCustomDiscount('');
     setPaymentMethod('Cash');
+    setBankName('BDO Unibank');
+    setPaymentRefNo('');
     setHmoProvider('Maxicare');
     setHmoApprovalCode('');
     setSeniorPwdId('');
@@ -440,6 +475,10 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                   className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="Cash">💵 Cash (₱)</option>
+                  <option value="GCash">📱 GCash</option>
+                  <option value="Maya">💳 Maya</option>
+                  <option value="PayPal">🅿️ PayPal</option>
+                  <option value="Bank Transfer">🏦 Bank Transfer</option>
                   <option value="HMO / Health Card">🏥 HMO / Health Card</option>
                   <option value="PhilHealth">🇵🇭 PhilHealth</option>
                   <option value="Free / Waived">🆓 Free / Waived</option>
@@ -456,6 +495,48 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                 />
               </div>
             </div>
+
+            {(paymentMethod === 'GCash' || paymentMethod === 'Maya' || paymentMethod === 'PayPal') && (
+              <div className="bg-blue-50/70 p-2 rounded-lg border border-blue-200">
+                <label className="text-[9px] text-blue-900 font-bold block mb-0.5">
+                  {paymentMethod} Ref / Transaction # (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 20018829103"
+                  value={paymentRefNo}
+                  onChange={(e) => setPaymentRefNo(e.target.value)}
+                  className="w-full bg-white border border-blue-300 rounded p-1 text-xs font-mono"
+                />
+              </div>
+            )}
+
+            {paymentMethod === 'Bank Transfer' && (
+              <div className="grid grid-cols-2 gap-2 bg-indigo-50/70 p-2 rounded-lg border border-indigo-200">
+                <div>
+                  <label className="text-[9px] text-indigo-900 font-bold block mb-0.5">Philippine Bank</label>
+                  <select
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="w-full bg-white border border-indigo-300 rounded p-1 text-xs font-medium text-indigo-900"
+                  >
+                    {COMMON_BANKS.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] text-indigo-900 font-bold block mb-0.5">Transfer Ref / Slip #</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. FT-998124"
+                    value={paymentRefNo}
+                    onChange={(e) => setPaymentRefNo(e.target.value)}
+                    className="w-full bg-white border border-indigo-300 rounded p-1 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            )}
 
             {paymentMethod === 'HMO / Health Card' && (
               <div className="grid grid-cols-2 gap-2 bg-blue-50/70 p-2 rounded-lg border border-blue-200">
@@ -525,12 +606,34 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
             checkups.map((rec) => (
               <div key={rec.id} className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs space-y-2">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
                     <span className="w-2 h-2 rounded-full bg-teal-500"></span>
                     <span className="font-bold text-slate-900 text-xs">{rec.date}</span>
-                    {rec.fee !== undefined && rec.fee > 0 && (
+                    {rec.fee !== undefined && rec.fee > 0 ? (
                       <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-200 font-mono">
                         ₱{Number(rec.fee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 text-[10px] italic">Free</span>
+                    )}
+                    {rec.paymentMethod === 'GCash' && (
+                      <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] px-1.5 py-0.2 rounded font-bold">
+                        📱 GCash
+                      </span>
+                    )}
+                    {rec.paymentMethod === 'Maya' && (
+                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9px] px-1.5 py-0.2 rounded font-bold">
+                        💳 Maya
+                      </span>
+                    )}
+                    {rec.paymentMethod === 'PayPal' && (
+                      <span className="bg-sky-50 text-sky-800 border border-sky-200 text-[9px] px-1.5 py-0.2 rounded font-bold">
+                        🅿️ PayPal
+                      </span>
+                    )}
+                    {rec.paymentMethod === 'Bank Transfer' && (
+                      <span className="bg-indigo-50 text-indigo-800 border border-indigo-200 text-[9px] px-1.5 py-0.2 rounded font-bold">
+                        🏦 {rec.bankName || 'Bank'}
                       </span>
                     )}
                   </div>
@@ -589,6 +692,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                         {rec.prescriptions.map((p) => p.genericName).join(', ')}
                       </div>
                     )}
+                    {rec.paymentRefNo && <p className="text-blue-700 text-[10px] font-mono">Ref: {rec.paymentRefNo}</p>}
                     {rec.notes && <p className="text-slate-400 text-[10px] italic">Notes: {rec.notes}</p>}
                   </div>
                 </div>
@@ -599,14 +703,14 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
 
         {/* DESKTOP TABLE VIEW (Shown on screens >= 768px) */}
         <div className="hidden md:block overflow-x-auto w-full">
-          <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[800px]">
+          <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[850px]">
             <thead className="bg-slate-100/80 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4 w-[110px]">Date</th>
                 <th className="py-3 px-3 w-[150px]">Vitals (Weight / BP / FHR)</th>
                 <th className="py-3 px-3 min-w-[190px]">Diagnosis</th>
                 <th className="py-3 px-3 min-w-[190px]">Procedure & Rx</th>
-                <th className="py-3 px-3 w-[110px]">Fee (₱)</th>
+                <th className="py-3 px-3 w-[150px]">Fee & Payment (₱)</th>
                 <th className="py-3 px-3 w-[110px]">Follow-up</th>
                 <th className="py-3 px-4 w-[130px] text-right">Action</th>
               </tr>
@@ -677,7 +781,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                 </td>
 
                 {/* Fee & Discount (₱) Input */}
-                <td className="py-3 px-3 align-top min-w-[150px] space-y-1.5">
+                <td className="py-3 px-3 align-top min-w-[160px] space-y-1.5">
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
                     <input
@@ -720,10 +824,45 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                     title="Payment Coverage / Provider"
                   >
                     <option value="Cash">💵 Cash</option>
+                    <option value="GCash">📱 GCash</option>
+                    <option value="Maya">💳 Maya</option>
+                    <option value="PayPal">🅿️ PayPal</option>
+                    <option value="Bank Transfer">🏦 Bank Transfer</option>
                     <option value="HMO / Health Card">🏥 HMO Card</option>
                     <option value="PhilHealth">🇵🇭 PhilHealth</option>
                     <option value="Free / Waived">🆓 Free</option>
                   </select>
+
+                  {(paymentMethod === 'GCash' || paymentMethod === 'Maya' || paymentMethod === 'PayPal') && (
+                    <input
+                      type="text"
+                      placeholder={`${paymentMethod} Ref #`}
+                      value={paymentRefNo}
+                      onChange={(e) => setPaymentRefNo(e.target.value)}
+                      className="w-full bg-white border border-blue-200 rounded px-1.5 py-0.5 text-[10px] font-mono"
+                    />
+                  )}
+
+                  {paymentMethod === 'Bank Transfer' && (
+                    <div className="space-y-1">
+                      <select
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        className="w-full bg-indigo-50 border border-indigo-200 rounded px-1 py-0.5 text-[10px] font-medium text-indigo-900"
+                      >
+                        {COMMON_BANKS.map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="Transfer Ref #"
+                        value={paymentRefNo}
+                        onChange={(e) => setPaymentRefNo(e.target.value)}
+                        className="w-full bg-white border border-indigo-200 rounded px-1.5 py-0.5 text-[10px] font-mono"
+                      />
+                    </div>
+                  )}
 
                   {paymentMethod === 'HMO / Health Card' && (
                     <div className="space-y-1">
@@ -828,6 +967,11 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                           </p>
                         </div>
                       )}
+                      {rec.paymentRefNo && (
+                        <p className="text-[10px] text-blue-700 font-mono mt-1 font-semibold">
+                          Payment Ref #: {rec.paymentRefNo}
+                        </p>
+                      )}
                       {rec.notes && <p className="text-[11px] text-slate-400 italic mt-1">Note: {rec.notes}</p>}
                     </td>
 
@@ -841,6 +985,26 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                           {rec.discountType && rec.discountType !== 'None' && (
                             <span className="bg-amber-50 text-amber-900 border border-amber-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
                               🏷️ {rec.discountType === 'Senior Citizen (20%)' ? 'Senior (20% off)' : rec.discountType === 'PWD (20%)' ? 'PWD (20% off)' : rec.discountType}
+                            </span>
+                          )}
+                          {rec.paymentMethod === 'GCash' && (
+                            <span className="bg-blue-50 text-blue-800 border border-blue-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              📱 GCash {rec.paymentRefNo ? `(${rec.paymentRefNo})` : ''}
+                            </span>
+                          )}
+                          {rec.paymentMethod === 'Maya' && (
+                            <span className="bg-emerald-50 text-emerald-900 border border-emerald-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              💳 Maya {rec.paymentRefNo ? `(${rec.paymentRefNo})` : ''}
+                            </span>
+                          )}
+                          {rec.paymentMethod === 'PayPal' && (
+                            <span className="bg-sky-50 text-sky-900 border border-sky-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              🅿️ PayPal {rec.paymentRefNo ? `(${rec.paymentRefNo})` : ''}
+                            </span>
+                          )}
+                          {rec.paymentMethod === 'Bank Transfer' && (
+                            <span className="bg-indigo-50 text-indigo-900 border border-indigo-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              🏦 {rec.bankName || 'Bank'} {rec.paymentRefNo ? `(${rec.paymentRefNo})` : ''}
                             </span>
                           )}
                           {rec.paymentMethod === 'HMO / Health Card' && (
@@ -926,7 +1090,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Edit Consultation Record & Billing</h3>
                   <p className="text-xs text-slate-500">
-                    Update clinical notes, vitals, diagnosis, fee, discounts, or HMO coverage
+                    Update clinical notes, vitals, diagnosis, fee, discounts, or HMO / Bank coverage
                   </p>
                 </div>
               </div>
@@ -990,13 +1154,53 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                     className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="Cash">💵 Cash (₱)</option>
+                    <option value="GCash">📱 GCash</option>
+                    <option value="Maya">💳 Maya</option>
+                    <option value="PayPal">🅿️ PayPal</option>
+                    <option value="Bank Transfer">🏦 Bank Transfer</option>
                     <option value="HMO / Health Card">🏥 HMO / Health Card</option>
                     <option value="PhilHealth">🇵🇭 PhilHealth</option>
                     <option value="Free / Waived">🆓 Free / Waived</option>
                   </select>
                 </div>
 
-                {editPaymentMethod === 'HMO / Health Card' ? (
+                {(editPaymentMethod === 'GCash' || editPaymentMethod === 'Maya' || editPaymentMethod === 'PayPal') ? (
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-semibold text-blue-900 block mb-1">{editPaymentMethod} Ref # / Transaction ID</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 20018829103"
+                      value={editPaymentRefNo}
+                      onChange={(e) => setEditPaymentRefNo(e.target.value)}
+                      className="w-full bg-white border border-blue-300 rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                    />
+                  </div>
+                ) : editPaymentMethod === 'Bank Transfer' ? (
+                  <>
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-900 block mb-1">Philippine Bank</label>
+                      <select
+                        value={editBankName}
+                        onChange={(e) => setEditBankName(e.target.value)}
+                        className="w-full bg-white border border-indigo-300 rounded-lg px-2 py-1.5 text-xs font-medium text-indigo-900"
+                      >
+                        {COMMON_BANKS.map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-indigo-900 block mb-1">Transfer Ref #</label>
+                      <input
+                        type="text"
+                        placeholder="FT-998124"
+                        value={editPaymentRefNo}
+                        onChange={(e) => setEditPaymentRefNo(e.target.value)}
+                        className="w-full bg-white border border-indigo-300 rounded-lg px-2.5 py-1.5 text-xs font-mono"
+                      />
+                    </div>
+                  </>
+                ) : editPaymentMethod === 'HMO / Health Card' ? (
                   <>
                     <div>
                       <label className="text-[11px] font-semibold text-blue-900 block mb-1">HMO Provider</label>

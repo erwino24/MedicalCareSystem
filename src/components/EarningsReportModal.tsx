@@ -137,6 +137,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
     discountType: string;
     discountAmount: number;
     paymentMethod: string;
+    bankName?: string;
+    paymentRefNo?: string;
     hmoProvider?: string;
     hmoApprovalCode?: string;
     seniorPwdId?: string;
@@ -161,6 +163,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
           const discType = c.discountType || 'None';
 
           if (paymentFilter === 'CASH' && payMethod !== 'Cash') return;
+          if (paymentFilter === 'E_WALLET' && payMethod !== 'GCash' && payMethod !== 'Maya' && payMethod !== 'PayPal') return;
+          if (paymentFilter === 'BANK' && payMethod !== 'Bank Transfer') return;
           if (paymentFilter === 'HMO' && payMethod !== 'HMO / Health Card') return;
           if (paymentFilter === 'PHILHEALTH' && payMethod !== 'PhilHealth') return;
           if (paymentFilter === 'SENIOR_PWD' && discType !== 'Senior Citizen (20%)' && discType !== 'PWD (20%)') return;
@@ -181,6 +185,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
             discountType: discType,
             discountAmount: c.discountAmount || (gross > net ? gross - net : 0),
             paymentMethod: payMethod,
+            bankName: c.bankName,
+            paymentRefNo: c.paymentRefNo,
             hmoProvider: c.hmoProvider,
             hmoApprovalCode: c.hmoApprovalCode,
             seniorPwdId: c.seniorPwdId,
@@ -205,6 +211,14 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
 
   const cashCollections = filteredEntries
     .filter((item) => item.paymentMethod === 'Cash')
+    .reduce((sum, item) => sum + item.fee, 0);
+
+  const eWalletCollections = filteredEntries
+    .filter((item) => item.paymentMethod === 'GCash' || item.paymentMethod === 'Maya' || item.paymentMethod === 'PayPal')
+    .reduce((sum, item) => sum + item.fee, 0);
+
+  const bankCollections = filteredEntries
+    .filter((item) => item.paymentMethod === 'Bank Transfer')
     .reduce((sum, item) => sum + item.fee, 0);
 
   const hmoReceivables = filteredEntries
@@ -323,7 +337,13 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
       'Discount Type': item.discountType,
       'Discount (PHP ₱)': item.discountAmount,
       'Payment / Coverage': item.paymentMethod,
-      'HMO / LOA Ref': item.paymentMethod === 'HMO / Health Card' ? `${item.hmoProvider || 'HMO'} (${item.hmoApprovalCode || 'No LOA'})` : 'N/A',
+      'Bank / HMO / Reference': item.paymentMethod === 'Bank Transfer'
+        ? `${item.bankName || 'Bank'} (${item.paymentRefNo || 'No Ref'})`
+        : item.paymentMethod === 'HMO / Health Card'
+        ? `${item.hmoProvider || 'HMO'} (${item.hmoApprovalCode || 'No LOA'})`
+        : (item.paymentMethod === 'GCash' || item.paymentMethod === 'Maya' || item.paymentMethod === 'PayPal')
+        ? `${item.paymentMethod} (Ref: ${item.paymentRefNo || 'N/A'})`
+        : 'N/A',
       'Net Amount Charged (PHP ₱)': item.fee,
     }));
 
@@ -339,8 +359,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
       'Gross Fee (PHP ₱)': totalGrossBillings,
       'Discount Type': `Discounts Given: ₱${totalDiscountsGiven.toFixed(2)}`,
       'Discount (PHP ₱)': totalDiscountsGiven,
-      'Payment / Coverage': `Cash: ₱${cashCollections.toFixed(2)} | HMO: ₱${hmoReceivables.toFixed(2)}`,
-      'HMO / LOA Ref': '',
+      'Payment / Coverage': `Cash: ₱${cashCollections.toFixed(2)} | E-Wallets: ₱${eWalletCollections.toFixed(2)} | Banks: ₱${bankCollections.toFixed(2)} | HMO: ₱${hmoReceivables.toFixed(2)}`,
+      'Bank / HMO / Reference': '',
       'Net Amount Charged (PHP ₱)': totalEarnings,
     } as any);
 
@@ -549,6 +569,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
             >
               <option value="ALL">All Payment Types</option>
               <option value="CASH">💵 Cash Only</option>
+              <option value="E_WALLET">📱 GCash / Maya / PayPal</option>
+              <option value="BANK">🏦 Bank Transfers Only</option>
               <option value="HMO">🏥 HMO Cards Only</option>
               <option value="PHILHEALTH">🇵🇭 PhilHealth Only</option>
               <option value="SENIOR_PWD">🏷️ Senior & PWD (20% Off)</option>
@@ -587,20 +609,34 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
               </span>
             </div>
 
-            {/* Cash vs HMO vs PhilHealth Breakdown */}
+            {/* Cash, E-Wallets & Banks Breakdown */}
             <div className="bg-blue-50/70 p-4 rounded-xl border border-blue-200 print:border-slate-400">
               <span className="text-[10px] font-bold text-blue-900 uppercase tracking-wider block">
-                Coverage Breakdown
+                Channels & Coverage
               </span>
-              <div className="mt-1 space-y-0.5 text-[11px]">
+              <div className="mt-1 space-y-0.5 text-[10px]">
                 <p className="font-bold text-slate-800 flex justify-between">
                   <span>💵 Cash:</span>
                   <span className="font-mono text-emerald-900">₱{cashCollections.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                 </p>
-                <p className="font-bold text-slate-800 flex justify-between">
-                  <span>🏥 HMO:</span>
-                  <span className="font-mono text-blue-900">₱{hmoReceivables.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                </p>
+                {eWalletCollections > 0 && (
+                  <p className="font-bold text-slate-800 flex justify-between">
+                    <span>📱 E-Wallets (GCash/Maya):</span>
+                    <span className="font-mono text-blue-900">₱{eWalletCollections.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                  </p>
+                )}
+                {bankCollections > 0 && (
+                  <p className="font-bold text-slate-800 flex justify-between">
+                    <span>🏦 Bank Transfers:</span>
+                    <span className="font-mono text-indigo-900">₱{bankCollections.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                  </p>
+                )}
+                {hmoReceivables > 0 && (
+                  <p className="font-bold text-slate-800 flex justify-between">
+                    <span>🏥 HMO Cards:</span>
+                    <span className="font-mono text-blue-900">₱{hmoReceivables.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                  </p>
+                )}
                 {philhealthTotal > 0 && (
                   <p className="font-bold text-slate-800 flex justify-between">
                     <span>🇵🇭 PhilHealth:</span>
@@ -740,7 +776,7 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                       <th className="py-2.5 px-3 w-[150px]">Patient Name</th>
                       <th className="py-2.5 px-3 w-[110px]">Specialty</th>
                       <th className="py-2.5 px-3 min-w-[170px]">Diagnosis & Procedure</th>
-                      <th className="py-2.5 px-3 w-[130px]">Discounts / Coverage</th>
+                      <th className="py-2.5 px-3 w-[140px]">Discounts / Payment Method</th>
                       <th className="py-2.5 px-3 w-[100px] text-right">Net Fee (₱)</th>
                     </tr>
                   </thead>
@@ -765,12 +801,27 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                         </td>
                         <td className="py-2.5 px-3 align-top space-y-0.5">
                           <span className="text-[10px] font-bold text-slate-700 block">
-                            {rec.paymentMethod === 'HMO / Health Card' ? `🏥 ${rec.hmoProvider || 'HMO'}` : rec.paymentMethod === 'PhilHealth' ? '🇵🇭 PhilHealth' : '💵 Cash'}
+                            {rec.paymentMethod === 'Bank Transfer'
+                              ? `🏦 ${rec.bankName || 'Bank'}`
+                              : rec.paymentMethod === 'GCash'
+                              ? '📱 GCash'
+                              : rec.paymentMethod === 'Maya'
+                              ? '💳 Maya'
+                              : rec.paymentMethod === 'PayPal'
+                              ? '🅿️ PayPal'
+                              : rec.paymentMethod === 'HMO / Health Card'
+                              ? `🏥 ${rec.hmoProvider || 'HMO'}`
+                              : rec.paymentMethod === 'PhilHealth'
+                              ? '🇵🇭 PhilHealth'
+                              : '💵 Cash'}
                           </span>
                           {rec.discountType && rec.discountType !== 'None' && (
                             <span className="bg-amber-50 text-amber-900 border border-amber-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
                               🏷️ {rec.discountType} (-₱{rec.discountAmount.toFixed(2)})
                             </span>
+                          )}
+                          {rec.paymentRefNo && (
+                            <span className="text-[9px] text-blue-700 block font-mono">Ref: {rec.paymentRefNo}</span>
                           )}
                           {rec.hmoApprovalCode && (
                             <span className="text-[9px] text-slate-400 block font-mono">LOA: {rec.hmoApprovalCode}</span>
