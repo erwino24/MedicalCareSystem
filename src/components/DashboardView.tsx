@@ -12,7 +12,9 @@ import {
   Plus,
   ChevronRight,
   Search,
-  Sparkles
+  Sparkles,
+  Check,
+  CheckCircle2
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -25,6 +27,7 @@ interface DashboardViewProps {
   onNavigateToPatients: () => void;
   onNavigateToSchedule: () => void;
   onManageStaffClick?: () => void;
+  onUpdateAppointmentStatus?: (appointmentId: string, status: 'Scheduled' | 'Completed' | 'Cancelled') => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -37,6 +40,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToPatients,
   onNavigateToSchedule,
   onManageStaffClick,
+  onUpdateAppointmentStatus,
 }) => {
   const isNurse = currentUser.role === 'NURSE';
   const todayStr = format(new Date(), 'yyyy-MM-dd');
@@ -371,12 +375,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {upcomingAppointments.map((apt) => (
                     <div
                       key={apt.id}
                       onClick={() => onSelectPatient(apt.patientId)}
-                      className="p-3 bg-slate-50 hover:bg-teal-50/50 border border-slate-200 rounded-xl transition space-y-1.5 cursor-pointer group"
+                      className="p-3 bg-slate-50 hover:bg-teal-50/50 border border-slate-200 hover:border-teal-300 rounded-xl transition space-y-2 cursor-pointer group shadow-2xs"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-900 group-hover:text-teal-800 transition truncate">
@@ -386,10 +390,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           {apt.time}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-2 text-[11px] text-slate-500">
-                        <span className="font-semibold text-teal-700">{apt.type}</span>
-                        <span>•</span>
-                        <span>{apt.date}</span>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                        <div className="flex items-center space-x-1.5 truncate">
+                          <span className="font-semibold text-teal-700">{apt.type}</span>
+                          <span>•</span>
+                          <span>{apt.date}</span>
+                        </div>
+
+                        {apt.status === 'Scheduled' ? (
+                          onUpdateAppointmentStatus && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdateAppointmentStatus(apt.id, 'Completed');
+                              }}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-0.5 rounded-md transition shadow-2xs flex items-center space-x-0.5 shrink-0 active:scale-95"
+                              title="Tag Consultation as Done"
+                            >
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                              <span>Done</span>
+                            </button>
+                          )
+                        ) : apt.status === 'Completed' ? (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded flex items-center space-x-1 shrink-0">
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                            <span>Done ✓</span>
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-rose-700 font-semibold bg-rose-50 px-1.5 py-0.5 rounded shrink-0">
+                            Cancelled
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}

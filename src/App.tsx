@@ -366,6 +366,21 @@ export function App() {
     );
   };
 
+  const handleUpdateAppointmentStatus = (appointmentId: string, newStatus: Appointment['status']) => {
+    const updatedAppointments = appointments.map((a) =>
+      a.id === appointmentId ? { ...a, status: newStatus } : a
+    );
+    setAppointments(updatedAppointments);
+    const targetApt = appointments.find((a) => a.id === appointmentId);
+    syncToExcelStorage(
+      patients,
+      updatedAppointments,
+      users,
+      `Tagged consultation for ${targetApt?.patientName || 'patient'} as ${newStatus}`
+    );
+    showToast(`Tagged consultation as "${newStatus}"!`);
+  };
+
   const handleRestoreDefaultExcel = async () => {
     try {
       const excelData = await fetchDefaultExcelDatabase();
@@ -466,6 +481,7 @@ export function App() {
             onNavigateToPatients={handleSelectPatients}
             onNavigateToSchedule={handleSelectSchedule}
             onManageStaffClick={() => setIsManageStaffModalOpen(true)}
+            onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
           />
         ) : activeTab === 'schedule' ? (
           <ScheduleView
@@ -475,6 +491,7 @@ export function App() {
             onOpenAddAppointment={handleOpenAddAppointment}
             onBackToList={handleSelectDashboard}
             currentUser={currentUser}
+            onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
           />
         ) : (
           /* Patients Directory Two-Column Layout */
@@ -502,11 +519,13 @@ export function App() {
               {selectedPatient ? (
                 <PatientDetails
                   patient={selectedPatient}
+                  appointments={appointments}
                   onBackToList={handleBackToList}
                   onUpdatePatient={handleUpdatePatient}
                   onDeletePatient={handleDeletePatient}
                   currentUserRole={currentUser.role}
                   currentUser={currentUser}
+                  onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
                 />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center bg-slate-50 p-8 text-center space-y-3">

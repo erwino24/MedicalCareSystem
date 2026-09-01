@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Patient, CheckupRecord, PrescriptionItem, PractitionerUser } from '../types/patient';
+import type { Patient, Appointment, CheckupRecord, PrescriptionItem, PractitionerUser } from '../types/patient';
 import { calculateObGynMetrics } from '../utils/obgynCalculator';
 import { CheckupTable } from './CheckupTable';
 import { PrescriptionModal } from './PrescriptionModal';
@@ -26,20 +26,24 @@ import {
 
 interface PatientDetailsProps {
   patient: Patient;
+  appointments?: Appointment[];
   onBackToList: () => void;
   onUpdatePatient: (updatedPatient: Patient) => void;
   onDeletePatient?: (patientId: string) => void;
   currentUserRole?: 'DOCTOR' | 'NURSE';
   currentUser?: PractitionerUser | null;
+  onUpdateAppointmentStatus?: (appointmentId: string, status: 'Scheduled' | 'Completed' | 'Cancelled') => void;
 }
 
 export const PatientDetails: React.FC<PatientDetailsProps> = ({
   patient,
+  appointments = [],
   onBackToList,
   onUpdatePatient,
   onDeletePatient,
   currentUserRole = 'DOCTOR',
   currentUser,
+  onUpdateAppointmentStatus,
 }) => {
   const isNurse = currentUserRole === 'NURSE';
   const [isEditing, setIsEditing] = useState(false);
@@ -160,6 +164,12 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
       ...patient,
       checkups: [newRecord, ...patient.checkups],
     });
+
+    // Automatically tag active scheduled consultation for this patient as Completed
+    const activeAppt = appointments.find((a) => a.patientId === patient.id && a.status === 'Scheduled');
+    if (activeAppt && onUpdateAppointmentStatus) {
+      onUpdateAppointmentStatus(activeAppt.id, 'Completed');
+    }
   };
 
   const handleDeleteCheckup = (checkupId: string) => {
@@ -677,6 +687,43 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
             </div>
           )}
         </div>
+
+        {/* ACTIVE SCHEDULED CONSULTATIONS BANNER WITH 1-CLICK TAG DONE */}
+        {appointments.filter((a) => a.patientId === patient.id && a.status === 'Scheduled').map((apt) => (
+          <div
+            key={apt.id}
+            className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/80 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs animate-in fade-in duration-200"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs shrink-0">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-slate-800 text-xs sm:text-sm">Active Booking in Schedule</span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.2 rounded-full border border-emerald-300">
+                    Scheduled
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  <strong>{apt.date}</strong> at <strong>{apt.time}</strong> • <span className="font-semibold text-teal-800">{apt.type}</span>
+                  {apt.notes && <span className="italic text-slate-500"> — "{apt.notes}"</span>}
+                </p>
+              </div>
+            </div>
+
+            {onUpdateAppointmentStatus && (
+              <button
+                onClick={() => onUpdateAppointmentStatus(apt.id, 'Completed')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs flex items-center space-x-1.5 shrink-0 self-start sm:self-auto cursor-pointer active:scale-95"
+                title="Mark this consultation booking as Completed / Done"
+              >
+                <Check className="w-4 h-4 stroke-[3]" />
+                <span>✓ Tag Consultation Done</span>
+              </button>
+            )}
+          </div>
+        ))}
 
         {/* CHECK-UP RECORDS TABLE */}
         <CheckupTable

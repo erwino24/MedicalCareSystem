@@ -15,7 +15,8 @@ import {
   ArrowLeft,
   CalendarCheck,
   Stethoscope,
-  Filter
+  Filter,
+  Check
 } from 'lucide-react';
 
 interface ScheduleViewProps {
@@ -25,6 +26,7 @@ interface ScheduleViewProps {
   onOpenAddAppointment: (date?: string) => void;
   onBackToList?: () => void;
   currentUser?: PractitionerUser;
+  onUpdateAppointmentStatus?: (appointmentId: string, status: 'Scheduled' | 'Completed' | 'Cancelled') => void;
 }
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
@@ -34,6 +36,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   onOpenAddAppointment,
   onBackToList,
   currentUser,
+  onUpdateAppointmentStatus,
 }) => {
   const today = format(new Date(), 'EEEE, MMMM d, yyyy');
   const todayIso = format(new Date(), 'yyyy-MM-dd');
@@ -396,19 +399,61 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                     )}
 
                     {/* Row 4: Action Button & Status */}
-                    <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between gap-2">
+                    <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2 flex-wrap">
                       <button
                         onClick={() => onSelectPatient(apt.patientId)}
                         className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center space-x-1 hover:underline cursor-pointer group"
                       >
-                        <span>Open Patient Record</span>
+                        <span>Open Patient Chart</span>
                         <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                       </button>
 
-                      <span className="text-[11px] text-emerald-700 font-semibold flex items-center space-x-1 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        <span>{apt.status}</span>
-                      </span>
+                      {/* Tag Done / Status Actions */}
+                      <div className="flex items-center space-x-1.5 shrink-0">
+                        {apt.status === 'Scheduled' ? (
+                          <>
+                            {onUpdateAppointmentStatus && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onUpdateAppointmentStatus(apt.id, 'Completed');
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition shadow-2xs flex items-center space-x-1 cursor-pointer active:scale-95"
+                                title="Tag Consultation as Done & Completed"
+                              >
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                <span>Tag Done</span>
+                              </button>
+                            )}
+                            <span className="text-[10px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 font-semibold">
+                              Scheduled
+                            </span>
+                          </>
+                        ) : apt.status === 'Completed' ? (
+                          <div className="flex items-center space-x-1.5">
+                            <span className="text-[11px] text-emerald-800 font-bold flex items-center space-x-1 bg-emerald-100 px-2.5 py-0.5 rounded-md border border-emerald-300">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Done / Completed ✓</span>
+                            </span>
+                            {onUpdateAppointmentStatus && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onUpdateAppointmentStatus(apt.id, 'Scheduled');
+                                }}
+                                className="text-[10px] text-slate-400 hover:text-slate-600 underline cursor-pointer"
+                                title="Reopen / Revert to Scheduled"
+                              >
+                                Undo
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                            Cancelled
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
