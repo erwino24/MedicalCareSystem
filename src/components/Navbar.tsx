@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import {
-  HeartPulse,
   Calendar as CalendarIcon,
   UserCheck,
   Plus,
@@ -176,9 +175,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* EXCEL DATABASE STATUS BUTTON & DROPDOWN (ONLY VISIBLE FOR DOCTOR) */}
+          {/* EXCEL DATABASE STATUS BUTTON & DROPDOWN (ONLY VISIBLE FOR DOCTOR ON DESKTOP) */}
           {!isNurse && (
-            <div className="relative">
+            <div className="relative hidden md:block">
               <button
                 onClick={() => { setIsExcelOpen(!isExcelOpen); setIsProfileOpen(false); }}
                 className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-medium transition flex items-center space-x-1.5 border shadow-2xs cursor-pointer ${
@@ -253,10 +252,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                             <button
                               onClick={() => {
                                 onDisconnectLocalFile();
+                                setIsExcelOpen(false);
                               }}
-                              className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-1 px-2 rounded text-[11px] transition cursor-pointer"
+                              className="text-rose-600 hover:text-rose-700 font-medium py-1 px-2 rounded text-[11px] transition cursor-pointer hover:bg-rose-50"
                             >
-                              Disconnect
+                              Disconnect Link
                             </button>
                           </div>
                         </div>
@@ -264,51 +264,64 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   )}
 
-                  {/* Auto-download Toggle */}
-                  <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
-                    <label htmlFor="autoDownloadToggle" className="cursor-pointer select-none text-[11px] text-slate-700 flex items-center space-x-2">
-                      <FolderSync className="w-3.5 h-3.5 text-teal-600" />
-                      <span>Auto-download .xlsx on saves</span>
-                    </label>
-                    <input
-                      id="autoDownloadToggle"
-                      type="checkbox"
-                      checked={autoDownloadOnSave}
-                      onChange={onToggleAutoDownload}
-                      className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 cursor-pointer"
-                    />
+                  {/* Auto Download On Save Toggle (Fallback for Safari/Firefox/Mobile) */}
+                  <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="font-semibold text-slate-700 block">Auto-Download File</span>
+                      <span className="text-[10px] text-slate-400">Download fresh .xlsx on patient saves</span>
+                    </div>
+                    <button
+                      onClick={onToggleAutoDownload}
+                      className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
+                        autoDownloadOnSave ? 'bg-emerald-600' : 'bg-slate-300'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${
+                          autoDownloadOnSave ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   </div>
 
                   <button
-                    onClick={() => { onExportExcel(); setIsExcelOpen(false); }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 text-slate-700 hover:text-emerald-900 flex items-center space-x-2 transition cursor-pointer"
+                    onClick={() => {
+                      onExportExcel();
+                      setIsExcelOpen(false);
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 flex items-center space-x-2 transition cursor-pointer"
                   >
-                    <Download className="w-4 h-4 text-emerald-600" />
+                    <Download className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
-                      <p className="font-semibold text-slate-800">Export / Download Excel (.xlsx)</p>
-                      <p className="text-[10px] text-slate-400">Save multi-sheet file with all current data</p>
+                      <p className="font-semibold text-slate-800">Export / Download Master Excel</p>
+                      <p className="text-[10px] text-slate-500">OBGYN_Clinic_Database.xlsx</p>
                     </div>
                   </button>
 
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 text-slate-700 hover:text-emerald-900 flex items-center space-x-2 transition cursor-pointer"
+                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 flex items-center space-x-2 transition cursor-pointer"
                   >
-                    <Upload className="w-4 h-4 text-teal-600" />
+                    <Upload className="w-4 h-4 text-teal-600 shrink-0" />
                     <div>
-                      <p className="font-semibold text-slate-800">Import Custom Excel Database</p>
-                      <p className="text-[10px] text-slate-400">Upload & restore from any .xlsx file</p>
+                      <p className="font-semibold text-slate-800">Import & Restore from Excel</p>
+                      <p className="text-[10px] text-slate-500">Load patients from your .xlsx file</p>
                     </div>
                   </button>
 
                   <button
-                    onClick={() => { onRestoreDefaultExcel(); setIsExcelOpen(false); }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-teal-50 text-teal-800 flex items-center space-x-2 transition border-t border-slate-100 cursor-pointer"
+                    onClick={() => {
+                      if (window.confirm('Reset clinic data to default sample database? Any unsaved local edits will be replaced.')) {
+                        onRestoreDefaultExcel();
+                        setIsExcelOpen(false);
+                      }
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-amber-50 text-amber-800 flex items-center space-x-2 transition border-t border-slate-100 cursor-pointer"
                   >
-                    <FolderSync className="w-4 h-4 text-teal-600" />
+                    <FolderSync className="w-4 h-4 text-amber-600 shrink-0" />
                     <div>
-                      <p className="font-semibold text-teal-900">Reload Default Excel Database</p>
-                      <p className="text-[10px] text-teal-600">Restore records from OBGYN_Clinic_Database.xlsx</p>
+                      <p className="font-semibold">Reset to Default Sample Database</p>
+                      <p className="text-[10px] text-amber-600/80">Reload default patient dataset</p>
                     </div>
                   </button>
 
@@ -342,10 +355,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onAddPatient}
             className="bg-teal-600 hover:bg-teal-700 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold shadow-xs transition flex items-center space-x-1.5 active:scale-95 cursor-pointer"
+            title="Register New Patient"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span className="hidden sm:inline">New Patient</span>
-            <span className="sm:hidden">+</span>
           </button>
 
           {/* USER PROFILE & CHANGE PASSWORD / LOGOUT DROPDOWN */}
@@ -439,13 +452,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="relative w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
             {/* Drawer Header */}
             <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="bg-gradient-to-tr from-teal-600 to-cyan-500 text-white p-2 rounded-xl shadow-xs">
-                  <HeartPulse className="w-5 h-5 animate-pulse" />
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-full bg-white border border-teal-200 shadow-2xs flex items-center justify-center shrink-0 p-0.5 overflow-hidden">
+                  <img
+                    src="/icon-svg.svg"
+                    alt="Medical Management System"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800">MaternalCare</h2>
-                  <span className="text-[10px] text-teal-700 font-bold uppercase tracking-wider">OB-GYN Portal</span>
+                  <h2 className="text-sm font-bold text-slate-800 leading-tight">Medical Management</h2>
+                  <span className="text-[10px] text-teal-700 font-bold uppercase tracking-wider">Clinical Practice</span>
                 </div>
               </div>
 
