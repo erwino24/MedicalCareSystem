@@ -75,7 +75,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     : appointments;
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-y-auto font-sans">
+    <div className="h-full w-full flex-1 flex flex-col bg-slate-50 overflow-y-auto font-sans">
       {/* MOBILE ONLY STICKY BACK BUTTON (md:hidden) */}
       {onBackToList && (
         <div className="sticky top-0 z-30 bg-slate-900 text-white p-3 md:hidden shadow-md flex items-center justify-between shrink-0">
@@ -92,7 +92,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         </div>
       )}
 
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 max-w-7xl mx-auto w-full">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 w-full max-w-[1600px] mx-auto">
         {/* Welcome Banner with Action Button */}
         <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none" />

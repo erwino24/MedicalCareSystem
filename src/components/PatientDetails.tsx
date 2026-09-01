@@ -197,7 +197,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-y-auto">
+    <div className="h-full w-full flex-1 flex flex-col bg-slate-50 overflow-y-auto">
       {/* MOBILE ONLY STICKY BACK BUTTON (md:hidden) */}
       <div className="sticky top-0 z-30 bg-slate-900 text-white p-3 md:hidden shadow-md flex items-center justify-between">
         <button
@@ -212,7 +212,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
         </span>
       </div>
 
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto w-full">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full">
         {/* TOP PATIENT HEADER CARD */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm relative">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 gap-4">

@@ -103,8 +103,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const totalConsultationsRecorded = patients.reduce((acc, p) => acc + p.checkups.length, 0);
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-y-auto font-sans">
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 max-w-7xl mx-auto w-full">
+    <div className="h-full w-full flex-1 flex flex-col bg-slate-50 overflow-y-auto font-sans">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 flex-1 w-full max-w-[1600px] mx-auto">
         {/* HERO WELCOME BANNER */}
         <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white rounded-2xl p-6 sm:p-7 shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-56 h-56 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />

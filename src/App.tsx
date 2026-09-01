@@ -476,33 +476,37 @@ export function App() {
       />
 
       {/* MAIN CONTAINER: Dynamic View Switcher */}
-      <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
+      <main className="flex-1 flex flex-col overflow-hidden relative w-full max-w-full bg-slate-50">
         {activeTab === 'dashboard' ? (
-          <DashboardView
-            currentUser={currentUser}
-            patients={patients}
-            appointments={appointments}
-            onSelectPatient={handleSelectPatient}
-            onOpenAddPatient={() => setIsAddPatientModalOpen(true)}
-            onOpenAddAppointment={() => handleOpenAddAppointment()}
-            onNavigateToPatients={handleSelectPatients}
-            onNavigateToSchedule={handleSelectSchedule}
-            onManageStaffClick={() => setIsManageStaffModalOpen(true)}
-            onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
-          />
+          <div className="flex-1 w-full h-full overflow-hidden flex flex-col">
+            <DashboardView
+              currentUser={currentUser}
+              patients={patients}
+              appointments={appointments}
+              onSelectPatient={handleSelectPatient}
+              onOpenAddPatient={() => setIsAddPatientModalOpen(true)}
+              onOpenAddAppointment={() => handleOpenAddAppointment()}
+              onNavigateToPatients={handleSelectPatients}
+              onNavigateToSchedule={handleSelectSchedule}
+              onManageStaffClick={() => setIsManageStaffModalOpen(true)}
+              onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
+            />
+          </div>
         ) : activeTab === 'schedule' ? (
-          <ScheduleView
-            patients={patients}
-            appointments={appointments}
-            onSelectPatient={handleSelectPatient}
-            onOpenAddAppointment={handleOpenAddAppointment}
-            onBackToList={handleSelectDashboard}
-            currentUser={currentUser}
-            onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
-          />
+          <div className="flex-1 w-full h-full overflow-hidden flex flex-col">
+            <ScheduleView
+              patients={patients}
+              appointments={appointments}
+              onSelectPatient={handleSelectPatient}
+              onOpenAddAppointment={handleOpenAddAppointment}
+              onBackToList={handleSelectDashboard}
+              currentUser={currentUser}
+              onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
+            />
+          </div>
         ) : (
           /* Patients Directory Two-Column Layout (Desktop Collapsible & Mobile Adaptive) */
-          <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
+          <div className="flex-1 flex flex-row overflow-hidden relative w-full max-w-full">
             {/* LEFT PANEL: Patient Directory */}
             <div
               className={`h-full shrink-0 border-r border-slate-200 transition-all duration-300 relative ${
@@ -568,7 +572,7 @@ export function App() {
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       {/* CLINICAL STATUS FOOTER BAR */}
       <footer className="bg-white border-t border-slate-200 px-3 sm:px-6 py-1.5 shrink-0 z-20 flex items-center justify-between text-[11px] text-slate-500 font-sans select-none">
