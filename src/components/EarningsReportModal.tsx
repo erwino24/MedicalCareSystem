@@ -33,7 +33,7 @@ type ReportPeriod = 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'p
 export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
   isOpen,
   onClose,
-  patients,
+  patients = [],
   currentUser,
 }) => {
   const [period, setPeriod] = useState<ReportPeriod>('this_month');
@@ -42,77 +42,85 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
   const [customEnd, setCustomEnd] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
 
-  if (!isOpen) return null;
-
   const now = new Date();
 
   // Determine interval based on selected period
   const dateInterval = useMemo(() => {
-    switch (period) {
-      case 'this_week':
-        return {
-          start: startOfWeek(now, { weekStartsOn: 1 }), // Monday
-          end: endOfWeek(now, { weekStartsOn: 1 }),
-          label: `This Week (${format(startOfWeek(now, { weekStartsOn: 1 }), 'MMM d')} – ${format(endOfWeek(now, { weekStartsOn: 1 }), 'MMM d, yyyy')})`,
-        };
-      case 'last_week': {
-        const lastWeekDate = subWeeks(now, 1);
-        return {
-          start: startOfWeek(lastWeekDate, { weekStartsOn: 1 }),
-          end: endOfWeek(lastWeekDate, { weekStartsOn: 1 }),
-          label: `Last Week (${format(startOfWeek(lastWeekDate, { weekStartsOn: 1 }), 'MMM d')} – ${format(endOfWeek(lastWeekDate, { weekStartsOn: 1 }), 'MMM d, yyyy')})`,
-        };
+    try {
+      switch (period) {
+        case 'this_week':
+          return {
+            start: startOfWeek(now, { weekStartsOn: 1 }), // Monday
+            end: endOfWeek(now, { weekStartsOn: 1 }),
+            label: `This Week (${format(startOfWeek(now, { weekStartsOn: 1 }), 'MMM d')} – ${format(endOfWeek(now, { weekStartsOn: 1 }), 'MMM d, yyyy')})`,
+          };
+        case 'last_week': {
+          const lastWeekDate = subWeeks(now, 1);
+          return {
+            start: startOfWeek(lastWeekDate, { weekStartsOn: 1 }),
+            end: endOfWeek(lastWeekDate, { weekStartsOn: 1 }),
+            label: `Last Week (${format(startOfWeek(lastWeekDate, { weekStartsOn: 1 }), 'MMM d')} – ${format(endOfWeek(lastWeekDate, { weekStartsOn: 1 }), 'MMM d, yyyy')})`,
+          };
+        }
+        case 'this_month': {
+          const parts = (selectedMonth || format(now, 'yyyy-MM')).split('-');
+          const y = parseInt(parts[0], 10) || now.getFullYear();
+          const m = parseInt(parts[1], 10) || (now.getMonth() + 1);
+          const targetDate = new Date(y, m - 1, 1);
+          return {
+            start: startOfMonth(targetDate),
+            end: endOfMonth(targetDate),
+            label: `Month of ${format(targetDate, 'MMMM yyyy')}`,
+          };
+        }
+        case 'last_month': {
+          const lastMonthDate = subMonths(now, 1);
+          return {
+            start: startOfMonth(lastMonthDate),
+            end: endOfMonth(lastMonthDate),
+            label: `Last Month (${format(lastMonthDate, 'MMMM yyyy')})`,
+          };
+        }
+        case 'past_6_months': {
+          const start6m = startOfMonth(subMonths(now, 5));
+          return {
+            start: start6m,
+            end: endOfMonth(now),
+            label: `Past 6 Months (${format(start6m, 'MMM yyyy')} – ${format(now, 'MMM yyyy')})`,
+          };
+        }
+        case 'year_to_date': {
+          const startYear = new Date(now.getFullYear(), 0, 1);
+          return {
+            start: startYear,
+            end: endOfMonth(now),
+            label: `Year-to-Date (${now.getFullYear()})`,
+          };
+        }
+        case 'custom': {
+          const start = customStart ? parseISO(customStart) : startOfMonth(now);
+          const end = customEnd ? parseISO(customEnd) : now;
+          return {
+            start,
+            end,
+            label: `Custom Range (${format(start, 'MMM d, yyyy')} – ${format(end, 'MMM d, yyyy')})`,
+          };
+        }
+        default:
+          return {
+            start: startOfMonth(now),
+            end: endOfMonth(now),
+            label: format(now, 'MMMM yyyy'),
+          };
       }
-      case 'this_month': {
-        const [yearStr, monthStr] = selectedMonth.split('-');
-        const targetDate = new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1, 1);
-        return {
-          start: startOfMonth(targetDate),
-          end: endOfMonth(targetDate),
-          label: `Month of ${format(targetDate, 'MMMM yyyy')}`,
-        };
-      }
-      case 'last_month': {
-        const lastMonthDate = subMonths(now, 1);
-        return {
-          start: startOfMonth(lastMonthDate),
-          end: endOfMonth(lastMonthDate),
-          label: `Last Month (${format(lastMonthDate, 'MMMM yyyy')})`,
-        };
-      }
-      case 'past_6_months': {
-        const start6m = startOfMonth(subMonths(now, 5));
-        return {
-          start: start6m,
-          end: endOfMonth(now),
-          label: `Past 6 Months (${format(start6m, 'MMM yyyy')} – ${format(now, 'MMM yyyy')})`,
-        };
-      }
-      case 'year_to_date': {
-        const startYear = new Date(now.getFullYear(), 0, 1);
-        return {
-          start: startYear,
-          end: endOfMonth(now),
-          label: `Year-to-Date (${now.getFullYear()})`,
-        };
-      }
-      case 'custom': {
-        const start = customStart ? parseISO(customStart) : startOfMonth(now);
-        const end = customEnd ? parseISO(customEnd) : now;
-        return {
-          start,
-          end,
-          label: `Custom Range (${format(start, 'MMM d, yyyy')} – ${format(end, 'MMM d, yyyy')})`,
-        };
-      }
-      default:
-        return {
-          start: startOfMonth(now),
-          end: endOfMonth(now),
-          label: format(now, 'MMMM yyyy'),
-        };
+    } catch {
+      return {
+        start: startOfMonth(now),
+        end: endOfMonth(now),
+        label: format(now, 'MMMM yyyy'),
+      };
     }
-  }, [period, selectedMonth, customStart, customEnd, now]);
+  }, [period, selectedMonth, customStart, customEnd]);
 
   // Extract and filter all consultations in interval
   interface ConsultationEntry {
@@ -213,7 +221,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
       ];
 
       filteredEntries.forEach((e) => {
-        const dayNum = parseInt(e.date.split('-')[2], 10);
+        const parts = (e.date || '').split('-');
+        const dayNum = parts.length === 3 ? parseInt(parts[2], 10) : 1;
         let index = 0;
         if (dayNum <= 7) index = 0;
         else if (dayNum <= 14) index = 1;
@@ -221,27 +230,29 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
         else if (dayNum <= 28) index = 3;
         else index = 4;
 
-        weeks[index].total += e.fee;
+        weeks[index].total += (e.fee || 0);
         weeks[index].count += 1;
       });
 
-      return weeks.filter((w, i) => i < 4 || w.count > 0);
+      return weeks;
     }
 
     // Default: Group by month for longer periods
     const monthMap: Record<string, { total: number; count: number }> = {};
     filteredEntries.forEach((e) => {
-      const monthKey = e.date.substring(0, 7); // YYYY-MM
+      const monthKey = (e.date || format(now, 'yyyy-MM')).substring(0, 7); // YYYY-MM
       if (!monthMap[monthKey]) monthMap[monthKey] = { total: 0, count: 0 };
-      monthMap[monthKey].total += e.fee;
+      monthMap[monthKey].total += (e.fee || 0);
       monthMap[monthKey].count += 1;
     });
 
     return Object.entries(monthMap)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([m, data]) => {
-        const [y, mon] = m.split('-');
-        const dateObj = new Date(parseInt(y, 10), parseInt(mon, 10) - 1, 1);
+        const parts = m.split('-');
+        const y = parseInt(parts[0], 10) || now.getFullYear();
+        const mon = parseInt(parts[1], 10) || (now.getMonth() + 1);
+        const dateObj = new Date(y, mon - 1, 1);
         return {
           label: format(dateObj, 'MMM yyyy'),
           total: data.total,
@@ -286,6 +297,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
   const handlePrint = () => {
     window.print();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto font-sans">
