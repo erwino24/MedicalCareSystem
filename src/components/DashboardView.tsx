@@ -99,8 +99,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   const displayedAppointments = filteredAppointments.slice(0, 10);
 
-  // Active checkup count
+  // Active checkup count & total fee collections in PHP
   const totalConsultationsRecorded = patients.reduce((acc, p) => acc + p.checkups.length, 0);
+  const totalRevenuePhp = patients.reduce(
+    (acc, p) => acc + p.checkups.reduce((sub, c) => sub + (c.fee || 0), 0),
+    0
+  );
 
   return (
     <div className="h-full w-full flex-1 flex flex-col bg-slate-50 overflow-y-auto font-sans">
@@ -218,23 +222,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Card 4: Consultations / Records */}
+          {/* Card 4: Consultations & Collections */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between">
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
                 <HeartPulse className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                Live Data
+                Peso (₱)
               </span>
             </div>
             <div className="mt-3">
-              <p className="text-xs text-slate-500 font-medium">Consultations Logged</p>
+              <p className="text-xs text-slate-500 font-medium">Consultations & Fees</p>
               <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">
                 {totalConsultationsRecorded}
               </p>
-              <p className="text-[11px] text-slate-400 mt-1">
-                {isNurse ? 'Clinical Records Ready' : 'Prescriptions & Notes Synced'}
+              <p className="text-[11px] text-emerald-700 font-bold mt-1 font-mono">
+                {totalRevenuePhp > 0 ? `₱${totalRevenuePhp.toLocaleString('en-PH', { minimumFractionDigits: 2 })} Total Collected` : 'Fee Tracking Active'}
               </p>
             </div>
           </div>

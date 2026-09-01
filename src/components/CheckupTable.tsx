@@ -25,6 +25,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
 
   // Input Row 1 State
   const [checkupDate, setCheckupDate] = useState<string>(defaultDate || todayDate);
+  const [fee, setFee] = useState<string>('');
   const [weightKg, setWeightKg] = useState<string>('');
   const [bp, setBp] = useState<string>('');
   const [fhrBpm, setFhrBpm] = useState<string>('');
@@ -34,6 +35,8 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+
+  const totalFees = checkups.reduce((sum, c) => sum + (c.fee || 0), 0);
 
   React.useEffect(() => {
     if (defaultDate) {
@@ -58,6 +61,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
     setErrorMsg('');
     onAddCheckup({
       date: checkupDate || todayDate,
+      fee: fee ? parseFloat(fee) : undefined,
       weightKg: weightKg ? parseFloat(weightKg) : undefined,
       bp: bp || undefined,
       fhrBpm: fhrBpm ? parseInt(fhrBpm, 10) : undefined,
@@ -68,6 +72,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
     });
 
     // Clear inputs except Date (which remains todayDate)
+    setFee('');
     setWeightKg('');
     setBp('');
     setFhrBpm('');
@@ -89,7 +94,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
             <Stethoscope className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
               <h3 className="text-sm font-bold text-slate-800">Check-up & Clinical Records</h3>
               {isNurse ? (
                 <span className="bg-amber-50 text-amber-800 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-amber-200 flex items-center space-x-1">
@@ -101,11 +106,16 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                   Doctor Clinical Mode
                 </span>
               )}
+              {totalFees > 0 && (
+                <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300 font-mono shadow-2xs">
+                  Total Collected: ₱{totalFees.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500">
               {isNurse
                 ? 'Record patient vitals & triage (Prescription creation & record deletions are restricted to Doctor)'
-                : 'Record consultation details, diagnosis, procedures, and print prescriptions'}
+                : 'Record consultation details, diagnosis, procedures, checkup fee (₱), and print prescriptions'}
             </p>
           </div>
         </div>
@@ -211,9 +221,22 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
               className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 resize-none"
             />
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Consultation Fee (₱)</label>
+              <div className="relative">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
+                <input
+                  type="number"
+                  placeholder="500.00"
+                  value={fee}
+                  onChange={(e) => setFee(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-lg pl-6 pr-2 py-2 text-xs font-bold text-emerald-900 focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            </div>
 
-          <div className="flex items-center space-x-2">
-            <div className="flex-1">
+            <div>
               <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">Next Follow-up</label>
               <input
                 type="date"
@@ -222,15 +245,16 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                 className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500"
               />
             </div>
-            <div className="pt-4">
-              <button
-                onClick={handleSave}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-xs transition flex items-center space-x-1.5 active:scale-95 text-xs shrink-0"
-              >
-                <Save className="w-3.5 h-3.5" />
-                <span>{isNurse ? 'Save Vitals' : 'Save Record'}</span>
-              </button>
-            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={handleSave}
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95 text-xs"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{isNurse ? 'Save Vitals' : 'Save Record & Fee'}</span>
+            </button>
           </div>
         </div>
 
@@ -253,6 +277,11 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                   <div className="flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-teal-500"></span>
                     <span className="font-bold text-slate-900 text-xs">{rec.date}</span>
+                    {rec.fee !== undefined && rec.fee > 0 && (
+                      <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-200 font-mono">
+                        ₱{Number(rec.fee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                      </span>
+                    )}
                   </div>
                     <div className="flex items-center space-x-1.5">
                       {!isNurse && onOpenPrescription && (
@@ -269,16 +298,11 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                           <span>{rec.prescriptions && rec.prescriptions.length > 0 ? `Rx (${rec.prescriptions.length})` : 'Rx'}</span>
                         </button>
                       )}
-                      {rec.followUpDate && (
-                        <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">
-                          Follow-up: {rec.followUpDate}
-                        </span>
-                      )}
                       {!isNurse && onDeleteCheckup && (
                         <button
                           onClick={() => onDeleteCheckup(rec.id)}
-                          className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 cursor-pointer"
-                          title="Delete"
+                          className="text-slate-400 hover:text-rose-600 p-1 hover:bg-rose-50 rounded transition"
+                          title="Delete record"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -286,17 +310,9 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 text-[11px]">
-                    {rec.bp && (
-                      <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200 font-medium">
-                        BP: <strong>{rec.bp}</strong>
-                      </span>
-                    )}
-                    {rec.weightKg && (
-                      <span className="bg-slate-50 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
-                        Wt: <strong>{rec.weightKg} kg</strong>
-                      </span>
-                    )}
+                  <div className="flex items-center space-x-3 text-[11px] text-slate-500">
+                    {rec.bp && <span>BP: <strong>{rec.bp}</strong></span>}
+                    {rec.weightKg && <span>Weight: <strong>{rec.weightKg} kg</strong></span>}
                     {rec.fhrBpm && (
                       <span className="bg-teal-50 text-teal-800 px-2 py-0.5 rounded border border-teal-200 font-medium">
                         FHR: <strong>{rec.fhrBpm} bpm</strong>
@@ -323,15 +339,16 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
 
         {/* DESKTOP TABLE VIEW (Shown on screens >= 768px) */}
         <div className="hidden md:block overflow-x-auto w-full">
-          <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[760px]">
+          <table className="w-full text-left text-xs text-slate-700 border-collapse min-w-[800px]">
             <thead className="bg-slate-100/80 text-slate-600 font-semibold border-b border-slate-200">
               <tr>
                 <th className="py-3 px-4 w-[110px]">Date</th>
                 <th className="py-3 px-3 w-[150px]">Vitals (Weight / BP / FHR)</th>
-                <th className="py-3 px-3 min-w-[200px]">Diagnosis</th>
-                <th className="py-3 px-3 min-w-[200px]">Procedure / Treatment & Rx</th>
-                <th className="py-3 px-3 w-[120px]">Follow-up</th>
-                <th className="py-3 px-4 w-[130px] text-right">Action</th>
+                <th className="py-3 px-3 min-w-[190px]">Diagnosis</th>
+                <th className="py-3 px-3 min-w-[190px]">Procedure & Rx</th>
+                <th className="py-3 px-3 w-[110px]">Fee (₱)</th>
+                <th className="py-3 px-3 w-[110px]">Follow-up</th>
+                <th className="py-3 px-4 w-[120px] text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -399,6 +416,21 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                   />
                 </td>
 
+                {/* Fee (₱) Input */}
+                <td className="py-3 px-3 align-top">
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
+                    <input
+                      type="number"
+                      placeholder="500"
+                      value={fee}
+                      onChange={(e) => setFee(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded pl-5 pr-1 py-1 text-xs font-bold text-emerald-900 focus:ring-1 focus:ring-teal-500"
+                    />
+                  </div>
+                  <span className="text-[9px] text-slate-400 block mt-1">PHP (₱)</span>
+                </td>
+
                 <td className="py-3 px-3 align-top">
                   <input
                     type="date"
@@ -422,7 +454,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
               {/* ROW 2+: PAST READ-ONLY CHECKUP RECORDS */}
               {checkups.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
                     <Clock className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                     <p className="font-medium text-slate-500">No past check-up records yet.</p>
                     <p className="text-[11px] text-slate-400">Fill in Row 1 above and click "Save Record".</p>
@@ -464,6 +496,17 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                         </div>
                       )}
                       {rec.notes && <p className="text-[11px] text-slate-400 italic mt-1">Note: {rec.notes}</p>}
+                    </td>
+
+                    {/* Past Fee Badge */}
+                    <td className="py-3.5 px-3 align-top">
+                      {rec.fee !== undefined && rec.fee > 0 ? (
+                        <span className="bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 font-mono text-[11px] whitespace-nowrap">
+                          ₱{Number(rec.fee).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px] italic">—</span>
+                      )}
                     </td>
 
                     <td className="py-3.5 px-3 align-top">

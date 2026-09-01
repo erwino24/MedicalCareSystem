@@ -73,6 +73,7 @@ export function buildClinicWorkbook(
         'Patient Name': p.fullName,
         'Checkup ID': c.id,
         'Consultation Date': c.date,
+        'Consultation Fee (₱)': c.fee ? Number(c.fee) : 0,
         'Blood Pressure': c.bp || 'N/A',
         'Weight (kg)': c.weightKg ?? 'N/A',
         'Fetal Heart Rate (bpm)': c.fhrBpm ?? 'N/A',
@@ -297,6 +298,7 @@ export function importClinicDatabaseFromExcel(file: File): Promise<ExcelImportRe
           const record: CheckupRecord = {
             id: String(row['Checkup ID'] || row['id'] || `chk-imp-${Math.random().toString(36).substring(2, 7)}`),
             date: String(row['Consultation Date'] || row['Date'] || row['date'] || format(new Date(), 'yyyy-MM-dd')),
+            fee: row['Consultation Fee (₱)'] || row['Fee (₱)'] || row['Fee'] || row['fee'] ? Number(row['Consultation Fee (₱)'] || row['Fee (₱)'] || row['Fee'] || row['fee']) : undefined,
             weightKg: row['Weight (kg)'] && row['Weight (kg)'] !== 'N/A' ? Number(row['Weight (kg)']) : undefined,
             bp: row['Blood Pressure'] && row['Blood Pressure'] !== 'N/A' ? String(row['Blood Pressure']) : undefined,
             fhrBpm: row['Fetal Heart Rate (bpm)'] && row['Fetal Heart Rate (bpm)'] !== 'N/A' ? Number(row['Fetal Heart Rate (bpm)']) : undefined,

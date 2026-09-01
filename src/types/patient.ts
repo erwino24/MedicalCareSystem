@@ -13,6 +13,7 @@ export interface PrescriptionItem {
 export interface CheckupRecord {
   id: string;
   date: string; // YYYY-MM-DD
+  fee?: number; // Consultation / Service Fee in Philippine Peso (₱)
   weightKg?: number;
   bp?: string; // e.g. "120/80"
   fhrBpm?: number; // Fetal Heart Rate
