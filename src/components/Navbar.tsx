@@ -106,8 +106,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center space-x-2 sm:space-x-3 text-left focus:outline-none cursor-pointer group shrink min-w-0"
             title="Go to Clinic Dashboard"
           >
-            <div className="bg-gradient-to-tr from-teal-600 to-cyan-500 text-white p-1.5 sm:p-2.5 rounded-xl shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-              <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 animate-pulse" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-white border border-teal-200 shadow-2xs flex items-center justify-center shrink-0 group-hover:scale-105 transition p-0.5 overflow-hidden">
+              <img
+                src="/icon-svg.svg"
+                alt="MaternalCare OB-GYN Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="min-w-0">
               <div className="flex items-center space-x-1.5 sm:space-x-2">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { PractitionerUser } from '../types/patient';
-import { HeartPulse, ShieldCheck, UserCheck, Stethoscope, ArrowRight, KeyRound, UserPlus, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, UserCheck, Stethoscope, ArrowRight, KeyRound, UserPlus, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface LoginScreenProps {
   users: PractitionerUser[];
@@ -113,8 +113,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ users, onLoginSuccess,
       <div className="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-3xl border border-white/80 shadow-[0_25px_60px_rgba(15,23,42,0.35)] p-6 sm:p-8 relative z-10 space-y-6 animate-in fade-in zoom-in-95 duration-200">
         {/* Branding Header */}
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-gradient-to-tr from-teal-600 to-cyan-500 text-white rounded-2xl mx-auto shadow-lg flex items-center justify-center">
-            <HeartPulse className="w-9 h-9 animate-pulse" />
+          <div className="w-18 h-18 mx-auto shadow-md rounded-full flex items-center justify-center p-1 bg-white border border-teal-200">
+            <img
+              src="/icon-svg.svg"
+              alt="MaternalCare OB-GYN Logo"
+              className="w-full h-full object-contain drop-shadow-xs"
+            />
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-3">MaternalCare OB-GYN</h1>
           <p className="text-xs text-slate-500 font-medium">
