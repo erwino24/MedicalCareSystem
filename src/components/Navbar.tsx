@@ -14,7 +14,9 @@ import {
   CheckCircle,
   FolderSync,
   LayoutDashboard,
-  Users
+  Users,
+  Menu,
+  X
 } from 'lucide-react';
 import type { PractitionerUser } from '../types/patient';
 import { isFileSystemAccessSupported } from '../utils/excelService';
@@ -68,6 +70,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const isNurse = currentUser.role === 'NURSE';
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isExcelOpen, setIsExcelOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hasFSAccess = isFileSystemAccessSupported();
 
@@ -85,38 +88,50 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="bg-white border-b border-slate-200 shrink-0 shadow-xs z-30 relative font-sans w-full max-w-full">
       <div className="px-2.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full">
-        {/* Brand & Logo - Click to go to Dashboard */}
-        <button
-          onClick={onSelectDashboard || onLogoClick}
-          className="flex items-center space-x-2 sm:space-x-3 text-left focus:outline-none cursor-pointer group shrink min-w-0"
-          title="Go to Clinic Dashboard"
-        >
-          <div className="bg-gradient-to-tr from-teal-600 to-cyan-500 text-white p-1.5 sm:p-2.5 rounded-xl shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-            <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 animate-pulse" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center space-x-1.5 sm:space-x-2">
-              <h1 className="text-xs sm:text-base md:text-lg font-bold text-slate-800 tracking-tight whitespace-nowrap truncate group-hover:text-teal-800 transition">
-                MaternalCare <span className="text-teal-700 font-extrabold">OB-GYN</span>
-              </h1>
-              <span className="bg-teal-50 text-teal-700 text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border border-teal-200 hidden xl:inline-flex shrink-0">
-                {isNurse ? 'Clinical Assistant' : 'Lead Doctor'}
-              </span>
+        {/* Left: Mobile Hamburger Toggle & Brand Logo */}
+        <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+          {/* Mobile Sidebar Hamburger Button (md:hidden) */}
+          <button
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="md:hidden p-1.5 text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer active:scale-95"
+            title="Open Mobile Navigation Menu"
+          >
+            <Menu className="w-5 h-5 text-slate-700" />
+          </button>
+
+          {/* Brand & Logo - Click to go to Dashboard */}
+          <button
+            onClick={onSelectDashboard || onLogoClick}
+            className="flex items-center space-x-2 sm:space-x-3 text-left focus:outline-none cursor-pointer group shrink min-w-0"
+            title="Go to Clinic Dashboard"
+          >
+            <div className="bg-gradient-to-tr from-teal-600 to-cyan-500 text-white p-1.5 sm:p-2.5 rounded-xl shadow-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+              <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 animate-pulse" />
             </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 hidden md:block truncate">
-              Obstetrics & Gynecology Patient Management System
-            </p>
-          </div>
-        </button>
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-800 tracking-tight whitespace-nowrap group-hover:text-teal-800 transition">
+                  MaternalCare <span className="text-teal-700 font-extrabold">OB-GYN</span>
+                </h1>
+                <span className="bg-teal-50 text-teal-700 text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border border-teal-200 hidden xl:inline-flex shrink-0">
+                  {isNurse ? 'Clinical Assistant' : 'Lead Doctor'}
+                </span>
+              </div>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 hidden md:block truncate">
+                Obstetrics & Gynecology Patient Management System
+              </p>
+            </div>
+          </button>
+        </div>
 
         {/* Center / Right Nav Items */}
-        <div className="flex items-center space-x-1 sm:space-x-2">
-          {/* Main Navigation Tabs */}
-          <div className="flex items-center space-x-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 text-xs">
+        <div className="flex items-center space-x-1.5 sm:space-x-2">
+          {/* Main Navigation Tabs - DESKTOP ONLY (hidden md:flex) */}
+          <div className="hidden md:flex items-center space-x-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 text-xs">
             {/* Dashboard Tab */}
             <button
               onClick={onSelectDashboard}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'dashboard'
                   ? 'bg-white text-teal-800 shadow-2xs border border-slate-200/80'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -124,13 +139,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Clinic Overview & Priority Dashboard"
             >
               <LayoutDashboard className="w-3.5 h-3.5 text-teal-600" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <span>Dashboard</span>
             </button>
 
             {/* Patients Directory Tab */}
             <button
               onClick={onSelectPatients}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'patients'
                   ? 'bg-white text-teal-800 shadow-2xs border border-slate-200/80'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -138,13 +153,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="View All Registered Patients"
             >
               <Users className="w-3.5 h-3.5 text-teal-600" />
-              <span className="hidden sm:inline">Patients</span>
+              <span>Patients</span>
             </button>
 
             {/* Schedule Tab */}
             <button
               onClick={onSelectSchedule}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1.5 cursor-pointer ${
                 activeTab === 'schedule'
                   ? 'bg-white text-teal-800 shadow-2xs border border-slate-200/80'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -152,7 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Interactive Clinic Schedule & Calendar"
             >
               <CalendarIcon className="w-3.5 h-3.5 text-teal-600" />
-              <span className="hidden sm:inline">Schedule</span>
+              <span>Schedule</span>
             </button>
           </div>
 
@@ -391,6 +406,176 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </div>
+
+      {/* MOBILE SLIDE-OUT SIDEBAR DRAWER (md:hidden) */}
+      {isMobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            onClick={() => setIsMobileDrawerOpen(false)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+          />
+
+          {/* Drawer Menu */}
+          <div className="relative w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200">
+            {/* Drawer Header */}
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="bg-gradient-to-tr from-teal-600 to-cyan-500 text-white p-2 rounded-xl shadow-xs">
+                  <HeartPulse className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-800">MaternalCare</h2>
+                  <span className="text-[10px] text-teal-700 font-bold uppercase tracking-wider">OB-GYN Portal</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* User Info Card */}
+            <div className="p-4 border-b border-slate-100 bg-teal-50/50">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                  {currentUser.avatar || currentUser.fullName.substring(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-900 text-sm truncate">{currentUser.fullName}</p>
+                  <span className="text-[10px] bg-teal-100 text-teal-800 font-semibold px-2 py-0.5 rounded-full mt-0.5 inline-block">
+                    {currentUser.role === 'DOCTOR' ? '👨‍⚕️ Lead Obstetrician' : '🩺 Clinical Assistant'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Navigation Links */}
+            <div className="p-3 flex-1 overflow-y-auto space-y-1 text-sm font-medium">
+              <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Menu Navigation
+              </div>
+
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onSelectDashboard();
+                }}
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition text-left cursor-pointer ${
+                  activeTab === 'dashboard'
+                    ? 'bg-teal-50 text-teal-900 font-bold border border-teal-200 shadow-2xs'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>Dashboard Overview</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onSelectPatients();
+                }}
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition text-left cursor-pointer ${
+                  activeTab === 'patients'
+                    ? 'bg-teal-50 text-teal-900 font-bold border border-teal-200 shadow-2xs'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Users className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>Patient Directory</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onSelectSchedule();
+                }}
+                className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition text-left cursor-pointer ${
+                  activeTab === 'schedule'
+                    ? 'bg-teal-50 text-teal-900 font-bold border border-teal-200 shadow-2xs'
+                    : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <CalendarIcon className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>Clinic Schedule & Calendar</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onAddPatient();
+                }}
+                className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold transition text-left shadow-xs mt-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span>+ Register New Patient</span>
+              </button>
+
+              {/* Doctor-Only Management Tools */}
+              {!isNurse && (
+                <div className="pt-3 border-t border-slate-100 mt-3 space-y-1">
+                  <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Doctor Tools
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setIsMobileDrawerOpen(false);
+                      onExportExcel();
+                    }}
+                    className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:bg-slate-50 text-left transition cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Export Excel Database</span>
+                  </button>
+
+                  {onManageStaffClick && (
+                    <button
+                      onClick={() => {
+                        setIsMobileDrawerOpen(false);
+                        onManageStaffClick();
+                      }}
+                      className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:bg-slate-50 text-left transition cursor-pointer"
+                    >
+                      <UserCheck className="w-4 h-4 text-teal-600 shrink-0" />
+                      <span>Manage Staff Accounts</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Drawer Footer / Account actions */}
+            <div className="p-3 border-t border-slate-200 bg-slate-50 space-y-1 text-xs">
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onChangePasswordClick();
+                }}
+                className="w-full flex items-center space-x-2.5 px-3 py-2 text-slate-700 hover:bg-slate-200 rounded-lg transition font-medium cursor-pointer"
+              >
+                <KeyRound className="w-4 h-4 text-slate-500 shrink-0" />
+                <span>Change Security PIN</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onLogout();
+                }}
+                className="w-full flex items-center space-x-2.5 px-3 py-2 text-rose-600 hover:bg-rose-100 rounded-lg transition font-bold cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>Logout of System</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
