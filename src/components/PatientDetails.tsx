@@ -141,15 +141,6 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
     setIsEditing(false);
   };
 
-  const handleToggleStatus = () => {
-    const newStatus = (patient.status || 'Active') === 'Active' ? 'Inactive' : 'Active';
-    setStatus(newStatus);
-    onUpdatePatient({
-      ...patient,
-      status: newStatus,
-    });
-  };
-
   const handleConfirmDeletePatient = () => {
     if (onDeletePatient) {
       onDeletePatient(patient.id);
@@ -230,19 +221,17 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                     Obstetric History: G{patient.gravida} P{patient.para}
                   </span>
 
-                  {/* Active / Inactive Status Toggle Pill */}
-                  <button
-                    onClick={handleToggleStatus}
-                    className={`font-semibold text-xs px-2.5 py-1 rounded-full border flex items-center space-x-1.5 transition cursor-pointer active:scale-95 ${
+                  {/* Active / Inactive Status Badge (Non-clickable, editable via Edit Info) */}
+                  <span
+                    className={`font-semibold text-xs px-2.5 py-1 rounded-full border flex items-center space-x-1.5 select-none ${
                       (patient.status || 'Active') === 'Active'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                        : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                        : 'bg-slate-100 text-slate-600 border-slate-300'
                     }`}
-                    title="Click to toggle Active / Inactive status"
                   >
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${ (patient.status || 'Active') === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }`} />
-                    <span>{(patient.status || 'Active') === 'Active' ? '🟢 Active Prenatal' : '⚪ Inactive / Delivered'}</span>
-                  </button>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${ (patient.status || 'Active') === 'Active' ? 'bg-emerald-500' : 'bg-slate-400' }`} />
+                    <span>{(patient.status || 'Active') === 'Active' ? 'Active Prenatal' : 'Inactive / Delivered'}</span>
+                  </span>
 
                   {isNurse && (
                     <span className="bg-amber-50 text-amber-800 text-[11px] font-semibold px-2 py-0.5 rounded-full border border-amber-200">
