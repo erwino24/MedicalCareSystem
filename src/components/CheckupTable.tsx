@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import type { CheckupRecord } from '../types/patient';
+import React, { useState, useEffect } from 'react';
+import type { CheckupRecord, DiscountType, PaymentMethod } from '../types/patient';
 import { format } from 'date-fns';
-import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert, Printer, Pencil, X, Check, Edit3 } from 'lucide-react';
+import { Save, Calendar, Stethoscope, Clock, CheckCircle2, Trash2, ShieldAlert, Printer, Pencil, X, Check, Edit3, Tag } from 'lucide-react';
 
 interface CheckupTableProps {
   checkups: CheckupRecord[];
@@ -12,6 +12,20 @@ interface CheckupTableProps {
   onOpenPrescription?: (checkup?: CheckupRecord) => void;
   defaultDate?: string;
 }
+
+export const COMMON_HMOS = [
+  'Maxicare',
+  'Medicard',
+  'Intellicare',
+  'PhilCare',
+  'Cocolife',
+  'Pacific Cross',
+  'Etiqa Philippines',
+  'Carehealth Plus',
+  'Insular Health Care',
+  'Caritas Health Shield',
+  'Other HMO',
+];
 
 export const CheckupTable: React.FC<CheckupTableProps> = ({
   checkups,
@@ -27,7 +41,15 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
 
   // Input Row 1 State
   const [checkupDate, setCheckupDate] = useState<string>(defaultDate || todayDate);
-  const [fee, setFee] = useState<string>('');
+  const [grossFee, setGrossFee] = useState<string>('');
+  const [discountType, setDiscountType] = useState<DiscountType>('None');
+  const [customDiscount, setCustomDiscount] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
+  const [hmoProvider, setHmoProvider] = useState<string>('Maxicare');
+  const [hmoApprovalCode, setHmoApprovalCode] = useState<string>('');
+  const [seniorPwdId, setSeniorPwdId] = useState<string>('');
+  const [philhealthClaimNo, setPhilhealthClaimNo] = useState<string>('');
+
   const [weightKg, setWeightKg] = useState<string>('');
   const [bp, setBp] = useState<string>('');
   const [fhrBpm, setFhrBpm] = useState<string>('');
@@ -38,10 +60,29 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
 
+  // Compute discount amount and net fee
+  const numericGross = parseFloat(grossFee) || 0;
+  let computedDiscount = 0;
+  if (discountType === 'Senior Citizen (20%)' || discountType === 'PWD (20%)') {
+    computedDiscount = numericGross * 0.20;
+  } else if (discountType === 'Doctor Courtesy' || paymentMethod === 'Free / Waived') {
+    computedDiscount = numericGross;
+  } else if (discountType === 'Custom') {
+    computedDiscount = parseFloat(customDiscount) || 0;
+  }
+  const computedNetFee = paymentMethod === 'Free / Waived' ? 0 : Math.max(0, numericGross - computedDiscount);
+
   // Edit Modal State (Accessible by both Doctor and Nurse)
   const [editingCheckup, setEditingCheckup] = useState<CheckupRecord | null>(null);
   const [editDate, setEditDate] = useState<string>('');
-  const [editFee, setEditFee] = useState<string>('');
+  const [editGrossFee, setEditGrossFee] = useState<string>('');
+  const [editDiscountType, setEditDiscountType] = useState<DiscountType>('None');
+  const [editCustomDiscount, setEditCustomDiscount] = useState<string>('');
+  const [editPaymentMethod, setEditPaymentMethod] = useState<PaymentMethod>('Cash');
+  const [editHmoProvider, setEditHmoProvider] = useState<string>('Maxicare');
+  const [editHmoApprovalCode, setEditHmoApprovalCode] = useState<string>('');
+  const [editSeniorPwdId, setEditSeniorPwdId] = useState<string>('');
+  const [editPhilhealthClaimNo, setEditPhilhealthClaimNo] = useState<string>('');
   const [editBp, setEditBp] = useState<string>('');
   const [editWeight, setEditWeight] = useState<string>('');
   const [editFhr, setEditFhr] = useState<string>('');
@@ -51,12 +92,30 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
   const [editFollowUp, setEditFollowUp] = useState<string>('');
   const [editNotes, setEditNotes] = useState<string>('');
 
+  const editNumericGross = parseFloat(editGrossFee) || 0;
+  let editComputedDiscount = 0;
+  if (editDiscountType === 'Senior Citizen (20%)' || editDiscountType === 'PWD (20%)') {
+    editComputedDiscount = editNumericGross * 0.20;
+  } else if (editDiscountType === 'Doctor Courtesy' || editPaymentMethod === 'Free / Waived') {
+    editComputedDiscount = editNumericGross;
+  } else if (editDiscountType === 'Custom') {
+    editComputedDiscount = parseFloat(editCustomDiscount) || 0;
+  }
+  const editComputedNetFee = editPaymentMethod === 'Free / Waived' ? 0 : Math.max(0, editNumericGross - editComputedDiscount);
+
   const totalFees = checkups.reduce((sum, c) => sum + (c.fee || 0), 0);
 
   const handleStartEdit = (rec: CheckupRecord) => {
     setEditingCheckup(rec);
     setEditDate(rec.date || todayDate);
-    setEditFee(rec.fee !== undefined ? String(rec.fee) : '');
+    setEditGrossFee(rec.grossFee !== undefined ? String(rec.grossFee) : (rec.fee !== undefined ? String(rec.fee) : ''));
+    setEditDiscountType(rec.discountType || 'None');
+    setEditCustomDiscount(rec.discountAmount !== undefined ? String(rec.discountAmount) : '');
+    setEditPaymentMethod(rec.paymentMethod || 'Cash');
+    setEditHmoProvider(rec.hmoProvider || 'Maxicare');
+    setEditHmoApprovalCode(rec.hmoApprovalCode || '');
+    setEditSeniorPwdId(rec.seniorPwdId || '');
+    setEditPhilhealthClaimNo(rec.philhealthClaimNo || '');
     setEditBp(rec.bp || '');
     setEditWeight(rec.weightKg !== undefined ? String(rec.weightKg) : '');
     setEditFhr(rec.fhrBpm !== undefined ? String(rec.fhrBpm) : '');
@@ -74,7 +133,15 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
     const updated: CheckupRecord = {
       ...editingCheckup,
       date: editDate || editingCheckup.date,
-      fee: editFee ? parseFloat(editFee) : undefined,
+      grossFee: editGrossFee ? parseFloat(editGrossFee) : undefined,
+      discountType: editDiscountType,
+      discountAmount: editComputedDiscount > 0 ? editComputedDiscount : undefined,
+      fee: editGrossFee ? editComputedNetFee : (editingCheckup.fee),
+      paymentMethod: editPaymentMethod,
+      hmoProvider: editPaymentMethod === 'HMO / Health Card' ? editHmoProvider : undefined,
+      hmoApprovalCode: editPaymentMethod === 'HMO / Health Card' ? editHmoApprovalCode.trim() || undefined : undefined,
+      seniorPwdId: (editDiscountType === 'Senior Citizen (20%)' || editDiscountType === 'PWD (20%)') ? editSeniorPwdId.trim() || undefined : undefined,
+      philhealthClaimNo: editPaymentMethod === 'PhilHealth' ? editPhilhealthClaimNo.trim() || undefined : undefined,
       bp: editBp || undefined,
       weightKg: editWeight ? parseFloat(editWeight) : undefined,
       fhrBpm: editFhr ? parseInt(editFhr, 10) : undefined,
@@ -91,7 +158,7 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
     setTimeout(() => setSaveSuccess(false), 2500);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (defaultDate) {
       setCheckupDate(defaultDate);
     }
@@ -114,7 +181,15 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
     setErrorMsg('');
     onAddCheckup({
       date: checkupDate || todayDate,
-      fee: fee ? parseFloat(fee) : undefined,
+      grossFee: grossFee ? numericGross : undefined,
+      discountType: discountType,
+      discountAmount: computedDiscount > 0 ? computedDiscount : undefined,
+      fee: grossFee ? computedNetFee : undefined,
+      paymentMethod: paymentMethod,
+      hmoProvider: paymentMethod === 'HMO / Health Card' ? hmoProvider : undefined,
+      hmoApprovalCode: paymentMethod === 'HMO / Health Card' ? hmoApprovalCode.trim() || undefined : undefined,
+      seniorPwdId: (discountType === 'Senior Citizen (20%)' || discountType === 'PWD (20%)') ? seniorPwdId.trim() || undefined : undefined,
+      philhealthClaimNo: paymentMethod === 'PhilHealth' ? philhealthClaimNo.trim() || undefined : undefined,
       weightKg: weightKg ? parseFloat(weightKg) : undefined,
       bp: bp || undefined,
       fhrBpm: fhrBpm ? parseInt(fhrBpm, 10) : undefined,
@@ -124,8 +199,15 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
       notes: notes.trim() || undefined,
     });
 
-    // Clear inputs except Date (which remains todayDate)
-    setFee('');
+    // Clear inputs except Date
+    setGrossFee('');
+    setDiscountType('None');
+    setCustomDiscount('');
+    setPaymentMethod('Cash');
+    setHmoProvider('Maxicare');
+    setHmoApprovalCode('');
+    setSeniorPwdId('');
+    setPhilhealthClaimNo('');
     setWeightKg('');
     setBp('');
     setFhrBpm('');
@@ -274,36 +356,152 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
               className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 resize-none"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-slate-600 font-bold block mb-0.5">Consultation Fee (₱)</label>
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
+          {/* BILLING, DISCOUNT & COVERAGE (Mobile Form) */}
+          <div className="bg-white/90 p-3 rounded-xl border border-teal-200 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-800 flex items-center space-x-1">
+                <Tag className="w-3.5 h-3.5 text-teal-600" />
+                <span>Consultation Fee & Discount</span>
+              </span>
+              {computedNetFee > 0 ? (
+                <span className="text-xs font-black text-emerald-950 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full font-mono">
+                  Net: ₱{computedNetFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                  Free / Waived
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-slate-600 font-semibold block mb-0.5">Standard Fee (₱)</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
+                  <input
+                    type="number"
+                    placeholder="500.00"
+                    value={grossFee}
+                    onChange={(e) => setGrossFee(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-lg pl-6 pr-2 py-1.5 text-xs font-bold text-emerald-900 focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-600 font-semibold block mb-0.5">Discount Type</label>
+                <select
+                  value={discountType}
+                  onChange={(e) => setDiscountType(e.target.value as DiscountType)}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs font-medium text-slate-800 focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="None">None (0%)</option>
+                  <option value="Senior Citizen (20%)">👴 Senior Citizen (20%)</option>
+                  <option value="PWD (20%)">♿ PWD (20%)</option>
+                  <option value="Doctor Courtesy">🤝 Doctor Courtesy (Free)</option>
+                  <option value="Custom">Custom (₱)</option>
+                </select>
+              </div>
+            </div>
+
+            {discountType === 'Custom' && (
+              <div>
+                <label className="text-[10px] text-slate-600 font-semibold block mb-0.5">Custom Discount Amount (₱)</label>
                 <input
                   type="number"
-                  placeholder="500.00"
-                  value={fee}
-                  onChange={(e) => setFee(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg pl-6 pr-2 py-2 text-xs font-bold text-emerald-900 focus:ring-2 focus:ring-teal-500"
+                  placeholder="e.g. 100"
+                  value={customDiscount}
+                  onChange={(e) => setCustomDiscount(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            )}
+
+            {(discountType === 'Senior Citizen (20%)' || discountType === 'PWD (20%)') && (
+              <div>
+                <label className="text-[10px] text-slate-600 font-semibold block mb-0.5">Senior / PWD ID # (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. OSCA-12345"
+                  value={seniorPwdId}
+                  onChange={(e) => setSeniorPwdId(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+              <div>
+                <label className="text-[10px] text-slate-600 font-semibold block mb-0.5">Payment / Coverage</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="Cash">💵 Cash (₱)</option>
+                  <option value="HMO / Health Card">🏥 HMO / Health Card</option>
+                  <option value="PhilHealth">🇵🇭 PhilHealth</option>
+                  <option value="Free / Waived">🆓 Free / Waived</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">Next Follow-up</label>
+                <input
+                  type="date"
+                  value={followUpDate}
+                  onChange={(e) => setFollowUpDate(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs focus:ring-2 focus:ring-teal-500"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">Next Follow-up</label>
-              <input
-                type="date"
-                value={followUpDate}
-                onChange={(e) => setFollowUpDate(e.target.value)}
-                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
+            {paymentMethod === 'HMO / Health Card' && (
+              <div className="grid grid-cols-2 gap-2 bg-blue-50/70 p-2 rounded-lg border border-blue-200">
+                <div>
+                  <label className="text-[9px] text-blue-900 font-bold block mb-0.5">HMO Provider</label>
+                  <select
+                    value={hmoProvider}
+                    onChange={(e) => setHmoProvider(e.target.value)}
+                    className="w-full bg-white border border-blue-300 rounded p-1 text-xs font-medium"
+                  >
+                    {COMMON_HMOS.map((hmo) => (
+                      <option key={hmo} value={hmo}>{hmo}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] text-blue-900 font-bold block mb-0.5">Approval / LOA Code</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. LOA-99214"
+                    value={hmoApprovalCode}
+                    onChange={(e) => setHmoApprovalCode(e.target.value)}
+                    className="w-full bg-white border border-blue-300 rounded p-1 text-xs"
+                  />
+                </div>
+              </div>
+            )}
+
+            {paymentMethod === 'PhilHealth' && (
+              <div className="bg-emerald-50/70 p-2 rounded-lg border border-emerald-200">
+                <label className="text-[9px] text-emerald-900 font-bold block mb-0.5">PhilHealth Claim / Konsulta Ref #</label>
+                <input
+                  type="text"
+                  placeholder="e.g. PH-2026-8812"
+                  value={philhealthClaimNo}
+                  onChange={(e) => setPhilhealthClaimNo(e.target.value)}
+                  className="w-full bg-white border border-emerald-300 rounded p-1 text-xs"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               onClick={handleSave}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95 text-xs"
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 active:scale-95 text-xs cursor-pointer"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{isNurse ? 'Save Vitals' : 'Save Record & Fee'}</span>
@@ -478,19 +676,92 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                   />
                 </td>
 
-                {/* Fee (₱) Input */}
-                <td className="py-3 px-3 align-top">
+                {/* Fee & Discount (₱) Input */}
+                <td className="py-3 px-3 align-top min-w-[150px] space-y-1.5">
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
                     <input
                       type="number"
-                      placeholder="500"
-                      value={fee}
-                      onChange={(e) => setFee(e.target.value)}
+                      placeholder="Gross Fee"
+                      value={grossFee}
+                      onChange={(e) => setGrossFee(e.target.value)}
                       className="w-full bg-white border border-slate-300 rounded pl-5 pr-1 py-1 text-xs font-bold text-emerald-900 focus:ring-1 focus:ring-teal-500"
+                      title="Standard Gross Consultation Fee (₱)"
                     />
                   </div>
-                  <span className="text-[9px] text-slate-400 block mt-1">PHP (₱)</span>
+
+                  <select
+                    value={discountType}
+                    onChange={(e) => setDiscountType(e.target.value as DiscountType)}
+                    className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-[11px] font-medium text-slate-700 focus:ring-1 focus:ring-teal-500"
+                    title="Discount Classification"
+                  >
+                    <option value="None">None (0%)</option>
+                    <option value="Senior Citizen (20%)">👴 Senior (20%)</option>
+                    <option value="PWD (20%)">♿ PWD (20%)</option>
+                    <option value="Doctor Courtesy">🤝 Courtesy (Free)</option>
+                    <option value="Custom">Custom (₱)</option>
+                  </select>
+
+                  {discountType === 'Custom' && (
+                    <input
+                      type="number"
+                      placeholder="Discount ₱"
+                      value={customDiscount}
+                      onChange={(e) => setCustomDiscount(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-[10px]"
+                    />
+                  )}
+
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                    className="w-full bg-white border border-slate-200 rounded px-1.5 py-1 text-[11px] font-semibold text-slate-800 focus:ring-1 focus:ring-teal-500"
+                    title="Payment Coverage / Provider"
+                  >
+                    <option value="Cash">💵 Cash</option>
+                    <option value="HMO / Health Card">🏥 HMO Card</option>
+                    <option value="PhilHealth">🇵🇭 PhilHealth</option>
+                    <option value="Free / Waived">🆓 Free</option>
+                  </select>
+
+                  {paymentMethod === 'HMO / Health Card' && (
+                    <div className="space-y-1">
+                      <select
+                        value={hmoProvider}
+                        onChange={(e) => setHmoProvider(e.target.value)}
+                        className="w-full bg-blue-50 border border-blue-200 rounded px-1 py-0.5 text-[10px] font-medium text-blue-900"
+                      >
+                        {COMMON_HMOS.map((h) => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="LOA / Appr #"
+                        value={hmoApprovalCode}
+                        onChange={(e) => setHmoApprovalCode(e.target.value)}
+                        className="w-full bg-white border border-blue-200 rounded px-1.5 py-0.5 text-[10px]"
+                      />
+                    </div>
+                  )}
+
+                  {paymentMethod === 'PhilHealth' && (
+                    <input
+                      type="text"
+                      placeholder="Claim / Ref #"
+                      value={philhealthClaimNo}
+                      onChange={(e) => setPhilhealthClaimNo(e.target.value)}
+                      className="w-full bg-white border border-emerald-200 rounded px-1.5 py-0.5 text-[10px]"
+                    />
+                  )}
+
+                  <div className="flex items-center justify-between text-[10px] pt-0.5 border-t border-slate-200">
+                    <span className="text-slate-400">Net:</span>
+                    <span className="font-mono font-bold text-emerald-950">
+                      ₱{computedNetFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 </td>
 
                 <td className="py-3 px-3 align-top">
@@ -560,11 +831,32 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                       {rec.notes && <p className="text-[11px] text-slate-400 italic mt-1">Note: {rec.notes}</p>}
                     </td>
 
-                    {/* Past Fee Badge */}
-                    <td className="py-3.5 px-3 align-top">
+                    {/* Past Fee & Coverage Badges */}
+                    <td className="py-3.5 px-3 align-top space-y-1">
                       {rec.fee !== undefined && rec.fee > 0 ? (
-                        <span className="bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 font-mono text-[11px] whitespace-nowrap">
-                          ₱{Number(rec.fee).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="space-y-0.5">
+                          <span className="bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 font-mono text-[11px] whitespace-nowrap block">
+                            ₱{Number(rec.fee).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                          {rec.discountType && rec.discountType !== 'None' && (
+                            <span className="bg-amber-50 text-amber-900 border border-amber-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              🏷️ {rec.discountType === 'Senior Citizen (20%)' ? 'Senior (20% off)' : rec.discountType === 'PWD (20%)' ? 'PWD (20% off)' : rec.discountType}
+                            </span>
+                          )}
+                          {rec.paymentMethod === 'HMO / Health Card' && (
+                            <span className="bg-blue-50 text-blue-900 border border-blue-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              🏥 {rec.hmoProvider || 'HMO'} {rec.hmoApprovalCode ? `(${rec.hmoApprovalCode})` : ''}
+                            </span>
+                          )}
+                          {rec.paymentMethod === 'PhilHealth' && (
+                            <span className="bg-emerald-50 text-emerald-900 border border-emerald-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              🇵🇭 PhilHealth
+                            </span>
+                          )}
+                        </div>
+                      ) : rec.discountType === 'Doctor Courtesy' || rec.paymentMethod === 'Free / Waived' ? (
+                        <span className="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded border border-slate-200 text-[10px] block">
+                          🆓 Free / Courtesy
                         </span>
                       ) : (
                         <span className="text-slate-400 text-[11px] italic">—</span>
@@ -624,17 +916,17 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
 
       {/* EDIT CONSULTATION RECORD MODAL (Doctor & Nurse) */}
       {editingCheckup && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-8">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-sans">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 my-8">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center space-x-2.5">
                 <div className="p-2 bg-teal-100 text-teal-700 rounded-xl">
                   <Edit3 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Edit Consultation Record</h3>
+                  <h3 className="text-base font-bold text-slate-900">Edit Consultation Record & Billing</h3>
                   <p className="text-xs text-slate-500">
-                    Update clinical notes, vitals, diagnosis, fee, or follow-up date
+                    Update clinical notes, vitals, diagnosis, fee, discounts, or HMO coverage
                   </p>
                 </div>
               </div>
@@ -646,9 +938,9 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="mt-4 space-y-4">
-              {/* Row: Date & Fee */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleSaveEdit} className="mt-4 space-y-4 text-xs">
+              {/* Row: Date, Gross Fee & Discount */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">Consultation Date</label>
                   <input
@@ -660,18 +952,99 @@ export const CheckupTable: React.FC<CheckupTableProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Consultation Fee (₱ PHP)</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Standard Fee (₱)</label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₱</span>
                     <input
                       type="number"
                       placeholder="0.00"
-                      value={editFee}
-                      onChange={(e) => setEditFee(e.target.value)}
+                      value={editGrossFee}
+                      onChange={(e) => setEditGrossFee(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-3 py-2 text-xs font-bold text-emerald-900 focus:bg-white focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Discount Type</label>
+                  <select
+                    value={editDiscountType}
+                    onChange={(e) => setEditDiscountType(e.target.value as DiscountType)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="None">None (0%)</option>
+                    <option value="Senior Citizen (20%)">👴 Senior Citizen (20%)</option>
+                    <option value="PWD (20%)">♿ PWD (20%)</option>
+                    <option value="Doctor Courtesy">🤝 Courtesy (Free)</option>
+                    <option value="Custom">Custom (₱)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row: Coverage & Net Fee Readout */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Payment Method</label>
+                  <select
+                    value={editPaymentMethod}
+                    onChange={(e) => setEditPaymentMethod(e.target.value as PaymentMethod)}
+                    className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="Cash">💵 Cash (₱)</option>
+                    <option value="HMO / Health Card">🏥 HMO / Health Card</option>
+                    <option value="PhilHealth">🇵🇭 PhilHealth</option>
+                    <option value="Free / Waived">🆓 Free / Waived</option>
+                  </select>
+                </div>
+
+                {editPaymentMethod === 'HMO / Health Card' ? (
+                  <>
+                    <div>
+                      <label className="text-[11px] font-semibold text-blue-900 block mb-1">HMO Provider</label>
+                      <select
+                        value={editHmoProvider}
+                        onChange={(e) => setEditHmoProvider(e.target.value)}
+                        className="w-full bg-white border border-blue-300 rounded-lg px-2 py-1.5 text-xs font-medium text-blue-900"
+                      >
+                        {COMMON_HMOS.map((h) => (
+                          <option key={h} value={h}>{h}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-blue-900 block mb-1">Approval / LOA Code</label>
+                      <input
+                        type="text"
+                        placeholder="LOA-12345"
+                        value={editHmoApprovalCode}
+                        onChange={(e) => setEditHmoApprovalCode(e.target.value)}
+                        className="w-full bg-white border border-blue-300 rounded-lg px-2.5 py-1.5 text-xs"
+                      />
+                    </div>
+                  </>
+                ) : editPaymentMethod === 'PhilHealth' ? (
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-semibold text-emerald-900 block mb-1">PhilHealth Claim / Konsulta Ref #</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. PH-2026-8812"
+                      value={editPhilhealthClaimNo}
+                      onChange={(e) => setEditPhilhealthClaimNo(e.target.value)}
+                      className="w-full bg-white border border-emerald-300 rounded-lg px-2.5 py-1.5 text-xs"
+                    />
+                  </div>
+                ) : (
+                  <div className="sm:col-span-2 flex items-center justify-between px-3 py-1.5 bg-emerald-50/70 border border-emerald-200 rounded-lg">
+                    <div>
+                      <span className="text-[10px] text-emerald-800 uppercase font-bold block">Net Amount Charged</span>
+                      <span className="text-xs text-slate-500">
+                        {editComputedDiscount > 0 ? `Gross ₱${editNumericGross.toFixed(2)} - Disc ₱${editComputedDiscount.toFixed(2)}` : 'Standard direct cash collection'}
+                      </span>
+                    </div>
+                    <span className="text-lg font-black text-emerald-950 font-mono">
+                      ₱{editComputedNetFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Row: Vitals (BP, Weight, FHR, Fundal) */}

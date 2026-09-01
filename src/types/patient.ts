@@ -10,10 +10,31 @@ export interface PrescriptionItem {
   duration: string; // "30 days"
 }
 
+export type DiscountType =
+  | 'None'
+  | 'Senior Citizen (20%)'
+  | 'PWD (20%)'
+  | 'Doctor Courtesy'
+  | 'Custom';
+
+export type PaymentMethod =
+  | 'Cash'
+  | 'HMO / Health Card'
+  | 'PhilHealth'
+  | 'Free / Waived';
+
 export interface CheckupRecord {
   id: string;
   date: string; // YYYY-MM-DD
-  fee?: number; // Consultation / Service Fee in Philippine Peso (₱)
+  fee?: number; // Final Net Fee charged in Philippine Peso (₱)
+  grossFee?: number; // Standard / Gross Fee before discount (₱)
+  discountType?: DiscountType; // 'None' | 'Senior Citizen (20%)' | 'PWD (20%)' | 'Doctor Courtesy' | 'Custom'
+  discountAmount?: number; // Amount discounted in PHP (₱)
+  paymentMethod?: PaymentMethod; // 'Cash' | 'HMO / Health Card' | 'PhilHealth' | 'Free / Waived'
+  hmoProvider?: string; // e.g. Maxicare, Medicard, Intellicare, PhilCare, Etiqa, etc.
+  hmoApprovalCode?: string; // LOA / Approval Code
+  seniorPwdId?: string; // Senior / PWD ID number
+  philhealthClaimNo?: string; // PhilHealth claim / Konsulta transaction ID
   weightKg?: number;
   bp?: string; // e.g. "120/80"
   fhrBpm?: number; // Fetal Heart Rate
@@ -49,6 +70,10 @@ export interface Patient {
   emergencyContactAddress?: string;
   bloodType: string;
   careType?: PatientCareType; // 'Pregnant' | 'General Illness' | 'Dengue / Fever' | 'Chronic Care' | 'Routine Checkup'
+  seniorPwdId?: string; // Senior Citizen or PWD ID number
+  philhealthNumber?: string; // PhilHealth identification number
+  hmoProvider?: string; // Primary HMO provider
+  hmoCardNumber?: string; // HMO card / Member ID
   gravida: number; // G - Number of pregnancies
   para: number;    // P - Number of births
   lmp: string;     // YYYY-MM-DD (Last Menstrual Period - optional/fallback for non-pregnant)

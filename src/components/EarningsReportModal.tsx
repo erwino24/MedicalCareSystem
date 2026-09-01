@@ -41,6 +41,7 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
   const [customStart, setCustomStart] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [customEnd, setCustomEnd] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [paymentFilter, setPaymentFilter] = useState<string>('ALL');
 
   const now = new Date();
 
@@ -132,6 +133,14 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
     careType: PatientCareType;
     diagnosis: string;
     procedure: string;
+    grossFee: number;
+    discountType: string;
+    discountAmount: number;
+    paymentMethod: string;
+    hmoProvider?: string;
+    hmoApprovalCode?: string;
+    seniorPwdId?: string;
+    philhealthClaimNo?: string;
     fee: number;
   }
 
@@ -148,6 +157,17 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
 
       p.checkups.forEach((c) => {
         if (c.date >= startDateStr && c.date <= endDateStr) {
+          const payMethod = c.paymentMethod || 'Cash';
+          const discType = c.discountType || 'None';
+
+          if (paymentFilter === 'CASH' && payMethod !== 'Cash') return;
+          if (paymentFilter === 'HMO' && payMethod !== 'HMO / Health Card') return;
+          if (paymentFilter === 'PHILHEALTH' && payMethod !== 'PhilHealth') return;
+          if (paymentFilter === 'SENIOR_PWD' && discType !== 'Senior Citizen (20%)' && discType !== 'PWD (20%)') return;
+
+          const net = c.fee !== undefined ? c.fee : 0;
+          const gross = c.grossFee !== undefined ? c.grossFee : (c.discountAmount ? net + c.discountAmount : net);
+
           list.push({
             checkupId: c.id,
             date: c.date,
@@ -157,7 +177,15 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
             careType: care,
             diagnosis: c.diagnosis,
             procedure: c.procedure,
-            fee: c.fee || 0,
+            grossFee: gross,
+            discountType: discType,
+            discountAmount: c.discountAmount || (gross > net ? gross - net : 0),
+            paymentMethod: payMethod,
+            hmoProvider: c.hmoProvider,
+            hmoApprovalCode: c.hmoApprovalCode,
+            seniorPwdId: c.seniorPwdId,
+            philhealthClaimNo: c.philhealthClaimNo,
+            fee: net,
           });
         }
       });
@@ -165,10 +193,28 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
 
     // Sort newest consultation first
     return list.sort((a, b) => b.date.localeCompare(a.date));
-  }, [patients, dateInterval, categoryFilter]);
+  }, [patients, dateInterval, categoryFilter, paymentFilter]);
 
   // Summary Metrics
   const totalEarnings = filteredEntries.reduce((sum, item) => sum + item.fee, 0);
+  const totalGrossBillings = filteredEntries.reduce((sum, item) => sum + item.grossFee, 0);
+  const totalDiscountsGiven = filteredEntries.reduce((sum, item) => sum + item.discountAmount, 0);
+  const seniorPwdDiscountTotal = filteredEntries
+    .filter((item) => item.discountType === 'Senior Citizen (20%)' || item.discountType === 'PWD (20%)')
+    .reduce((sum, item) => sum + item.discountAmount, 0);
+
+  const cashCollections = filteredEntries
+    .filter((item) => item.paymentMethod === 'Cash')
+    .reduce((sum, item) => sum + item.fee, 0);
+
+  const hmoReceivables = filteredEntries
+    .filter((item) => item.paymentMethod === 'HMO / Health Card')
+    .reduce((sum, item) => sum + item.fee, 0);
+
+  const philhealthTotal = filteredEntries
+    .filter((item) => item.paymentMethod === 'PhilHealth')
+    .reduce((sum, item) => sum + item.fee, 0);
+
   const totalConsultations = filteredEntries.length;
   const consultationsWithFee = filteredEntries.filter((item) => item.fee > 0).length;
   const uniquePatientsCount = new Set(filteredEntries.map((item) => item.patientId)).size;
@@ -273,19 +319,29 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
       'Clinical Care Category': item.careType,
       'Diagnosis / Assessment': item.diagnosis,
       'Procedure / Treatment': item.procedure,
-      'Fee / Amount Charged (PHP ₱)': item.fee,
+      'Gross Fee (PHP ₱)': item.grossFee,
+      'Discount Type': item.discountType,
+      'Discount (PHP ₱)': item.discountAmount,
+      'Payment / Coverage': item.paymentMethod,
+      'HMO / LOA Ref': item.paymentMethod === 'HMO / Health Card' ? `${item.hmoProvider || 'HMO'} (${item.hmoApprovalCode || 'No LOA'})` : 'N/A',
+      'Net Amount Charged (PHP ₱)': item.fee,
     }));
 
-    // Add summary row at bottom
+    // Add summary rows at bottom
     sheetData.push({
       'No.': '',
-      'Consultation Date': 'TOTAL EARNINGS',
+      'Consultation Date': 'TOTAL NET EARNINGS',
       'Patient Name': `${totalConsultations} Consultations (${uniquePatientsCount} Patients)`,
       'Age': '',
       'Clinical Care Category': '',
       'Diagnosis / Assessment': '',
       'Procedure / Treatment': '',
-      'Fee / Amount Charged (PHP ₱)': totalEarnings,
+      'Gross Fee (PHP ₱)': totalGrossBillings,
+      'Discount Type': `Discounts Given: ₱${totalDiscountsGiven.toFixed(2)}`,
+      'Discount (PHP ₱)': totalDiscountsGiven,
+      'Payment / Coverage': `Cash: ₱${cashCollections.toFixed(2)} | HMO: ₱${hmoReceivables.toFixed(2)}`,
+      'HMO / LOA Ref': '',
+      'Net Amount Charged (PHP ₱)': totalEarnings,
     } as any);
 
     const worksheet = XLSX.utils.json_to_sheet(sheetData);
@@ -477,77 +533,103 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
             >
               <option value="ALL">All Specialties</option>
               <option value="Pregnant">🤰 Pregnant / OB-GYN</option>
-              <option value="Baby / Pediatric">👶 Pediatric / Baby</option>
+              <option value="Pediatric / Baby Care">👶 Pediatric / Baby</option>
               <option value="Anti-Rabies / Animal Bite">🐕 Anti-Rabies</option>
-              <option value="Vaccine / Immunization">💉 Vaccines</option>
+              <option value="Vaccination / Immunization">💉 Vaccines</option>
               <option value="Dengue / Fever">🦟 Dengue / Fever</option>
               <option value="General Illness">🤒 General OPD</option>
               <option value="Chronic Care">🩺 Chronic Care</option>
+            </select>
+
+            {/* Payment & Discount Filter */}
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+            >
+              <option value="ALL">All Payment Types</option>
+              <option value="CASH">💵 Cash Only</option>
+              <option value="HMO">🏥 HMO Cards Only</option>
+              <option value="PHILHEALTH">🇵🇭 PhilHealth Only</option>
+              <option value="SENIOR_PWD">🏷️ Senior & PWD (20% Off)</option>
             </select>
           </div>
         </div>
 
         {/* SCROLLABLE REPORT BODY */}
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 bg-white">
+        <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 bg-white print:overflow-visible print:p-0 print:space-y-4">
           
-          {/* STATS TILES */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {/* Total Revenue */}
-            <div className="bg-gradient-to-br from-emerald-500/10 via-teal-50 to-white p-4 rounded-xl border border-emerald-300 shadow-2xs">
+          {/* STATS TILES (FINANCIAL SUMMARY) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 print:grid-cols-4 print:gap-2">
+            {/* Total Net Revenue */}
+            <div className="bg-gradient-to-br from-emerald-500/10 via-teal-50 to-white p-4 rounded-xl border border-emerald-300 shadow-2xs print:border-slate-400 print:bg-slate-50">
               <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                Total Period Earnings
+                Total Net Collections
               </span>
               <p className="text-2xl sm:text-3xl font-black text-emerald-950 font-mono mt-1">
                 ₱{totalEarnings.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <span className="text-[10px] text-slate-500 mt-0.5 block">
-                {consultationsWithFee} billed check-up{consultationsWithFee === 1 ? '' : 's'}
+                Gross Billed: ₱{totalGrossBillings.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
               </span>
             </div>
 
-            {/* Total Consultations */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            {/* Discounts Given (Senior / PWD / Courtesy) */}
+            <div className="bg-amber-50/70 p-4 rounded-xl border border-amber-200 print:border-slate-400">
+              <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block">
+                Total Discounts Given
+              </span>
+              <p className="text-2xl sm:text-3xl font-black text-amber-950 font-mono mt-1">
+                ₱{totalDiscountsGiven.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <span className="text-[10px] text-amber-800 font-medium mt-0.5 block">
+                Senior / PWD Savings: ₱{seniorPwdDiscountTotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            {/* Cash vs HMO vs PhilHealth Breakdown */}
+            <div className="bg-blue-50/70 p-4 rounded-xl border border-blue-200 print:border-slate-400">
+              <span className="text-[10px] font-bold text-blue-900 uppercase tracking-wider block">
+                Coverage Breakdown
+              </span>
+              <div className="mt-1 space-y-0.5 text-[11px]">
+                <p className="font-bold text-slate-800 flex justify-between">
+                  <span>💵 Cash:</span>
+                  <span className="font-mono text-emerald-900">₱{cashCollections.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                </p>
+                <p className="font-bold text-slate-800 flex justify-between">
+                  <span>🏥 HMO:</span>
+                  <span className="font-mono text-blue-900">₱{hmoReceivables.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                </p>
+                {philhealthTotal > 0 && (
+                  <p className="font-bold text-slate-800 flex justify-between">
+                    <span>🇵🇭 PhilHealth:</span>
+                    <span className="font-mono text-emerald-900">₱{philhealthTotal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Consultations Logged & Average */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 print:border-slate-400">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
                 Consultations Logged
               </span>
               <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
                 {totalConsultations}
               </p>
-              <span className="text-[10px] text-teal-700 font-semibold mt-0.5 block">
-                {uniquePatientsCount} Unique Patients Served
-              </span>
-            </div>
-
-            {/* Average Fee */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                Average Consultation Fee
-              </span>
-              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-1">
-                ₱{avgFeePerConsultation.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">Per billed patient visit</span>
-            </div>
-
-            {/* Fee Collection Rate */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                Paid Visit Ratio
-              </span>
-              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-                {totalConsultations > 0 ? Math.round((consultationsWithFee / totalConsultations) * 100) : 0}%
-              </p>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">
-                {consultationsWithFee} paid / {totalConsultations} total visits
-              </span>
+              <div className="text-[10px] text-slate-500 mt-0.5 flex justify-between">
+                <span className="text-teal-700 font-semibold">{uniquePatientsCount} Patients</span>
+                <span className="font-mono font-medium">Avg: ₱{avgFeePerConsultation.toFixed(0)}</span>
+              </div>
             </div>
           </div>
 
           {/* VISUAL BREAKDOWN SECTION (TIME TREND & SPECIALTY BREAKDOWN) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 print:grid-cols-12 print:gap-4">
             
             {/* LEFT: TIME PERIOD BAR GRAPH (Weekly / Daily) */}
-            <div className="lg:col-span-7 bg-slate-50 rounded-xl border border-slate-200 p-4.5 space-y-3">
+            <div className="lg:col-span-7 bg-slate-50 rounded-xl border border-slate-200 p-4.5 space-y-3 print:col-span-7 print:border-slate-300">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <div className="flex items-center space-x-2">
                   <TrendingUp className="w-4 h-4 text-teal-600" />
@@ -577,7 +659,7 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                             </span>
                           </div>
                         </div>
-                        <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden">
+                        <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden print:border print:border-slate-300">
                           <div
                             className="bg-gradient-to-r from-teal-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300"
                             style={{ width: `${barWidthPercent}%` }}
@@ -591,7 +673,7 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
             </div>
 
             {/* RIGHT: EARNINGS BY SPECIALTY */}
-            <div className="lg:col-span-5 bg-slate-50 rounded-xl border border-slate-200 p-4.5 space-y-3">
+            <div className="lg:col-span-5 bg-slate-50 rounded-xl border border-slate-200 p-4.5 space-y-3 print:col-span-5 print:border-slate-300">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <div className="flex items-center space-x-2">
                   <Stethoscope className="w-4 h-4 text-teal-600" />
@@ -619,7 +701,7 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                           </span>
                         </div>
                       </div>
-                      <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden print:border print:border-slate-300">
                         <div
                           className="bg-teal-600 h-2 rounded-full"
                           style={{ width: `${item.percentage}%` }}
@@ -651,14 +733,15 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-200 print:border-slate-300">
-                <table className="w-full text-left text-xs text-slate-700 min-w-[700px]">
+                <table className="w-full text-left text-xs text-slate-700 min-w-[750px]">
                   <thead className="bg-slate-100/90 text-slate-600 font-semibold border-b border-slate-200 print:bg-slate-100">
                     <tr>
-                      <th className="py-2.5 px-3 w-[100px]">Date</th>
-                      <th className="py-2.5 px-3 w-[160px]">Patient Name</th>
-                      <th className="py-2.5 px-3 w-[130px]">Specialty</th>
-                      <th className="py-2.5 px-3 min-w-[200px]">Diagnosis & Procedure</th>
-                      <th className="py-2.5 px-3 w-[110px] text-right">Fee (₱)</th>
+                      <th className="py-2.5 px-3 w-[90px]">Date</th>
+                      <th className="py-2.5 px-3 w-[150px]">Patient Name</th>
+                      <th className="py-2.5 px-3 w-[110px]">Specialty</th>
+                      <th className="py-2.5 px-3 min-w-[170px]">Diagnosis & Procedure</th>
+                      <th className="py-2.5 px-3 w-[130px]">Discounts / Coverage</th>
+                      <th className="py-2.5 px-3 w-[100px] text-right">Net Fee (₱)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -680,13 +763,26 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                           <p className="font-semibold text-slate-800 text-[11px]">{rec.diagnosis}</p>
                           <p className="text-slate-500 text-[10px] truncate max-w-md">{rec.procedure}</p>
                         </td>
+                        <td className="py-2.5 px-3 align-top space-y-0.5">
+                          <span className="text-[10px] font-bold text-slate-700 block">
+                            {rec.paymentMethod === 'HMO / Health Card' ? `🏥 ${rec.hmoProvider || 'HMO'}` : rec.paymentMethod === 'PhilHealth' ? '🇵🇭 PhilHealth' : '💵 Cash'}
+                          </span>
+                          {rec.discountType && rec.discountType !== 'None' && (
+                            <span className="bg-amber-50 text-amber-900 border border-amber-200 text-[9px] px-1.5 py-0.2 rounded block font-semibold">
+                              🏷️ {rec.discountType} (-₱{rec.discountAmount.toFixed(2)})
+                            </span>
+                          )}
+                          {rec.hmoApprovalCode && (
+                            <span className="text-[9px] text-slate-400 block font-mono">LOA: {rec.hmoApprovalCode}</span>
+                          )}
+                        </td>
                         <td className="py-2.5 px-3 align-top text-right font-mono font-bold">
                           {rec.fee > 0 ? (
                             <span className="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 print:bg-transparent print:border-none">
                               ₱{rec.fee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           ) : (
-                            <span className="text-slate-300 font-normal">—</span>
+                            <span className="text-slate-400 font-normal italic">Free</span>
                           )}
                         </td>
                       </tr>
@@ -694,8 +790,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                   </tbody>
                   <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-900">
                     <tr>
-                      <td colSpan={4} className="py-3 px-3 text-right">
-                        Total Period Collections:
+                      <td colSpan={5} className="py-3 px-3 text-right">
+                        Total Net Collections:
                       </td>
                       <td className="py-3 px-3 text-right font-mono text-emerald-950 text-sm">
                         ₱{totalEarnings.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
