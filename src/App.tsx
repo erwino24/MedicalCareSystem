@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { PatientList } from './components/PatientList';
 import { PatientDetails } from './components/PatientDetails';
 import { ScheduleView } from './components/ScheduleView';
+import { DashboardView } from './components/DashboardView';
 import { AddPatientModal } from './components/AddPatientModal';
 import { AddAppointmentModal } from './components/AddAppointmentModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
@@ -60,7 +61,7 @@ export function App() {
   });
 
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [isScheduleViewActive, setIsScheduleViewActive] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'patients' | 'schedule'>('dashboard');
 
   // Modals
   const [isAddPatientModalOpen, setIsAddPatientModalOpen] = useState<boolean>(false);
@@ -271,6 +272,7 @@ export function App() {
         users={users}
         onLoginSuccess={(user) => {
           setCurrentUser(user);
+          setActiveTab('dashboard');
           showToast(`Welcome back, ${user.fullName}!`);
         }}
       />
@@ -279,33 +281,34 @@ export function App() {
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId) || null;
 
-  const handleSelectPatient = (patientId: string) => {
-    setSelectedPatientId(patientId);
-    setIsScheduleViewActive(false);
-    setMobileView('details');
+  const handleSelectDashboard = () => {
+    setActiveTab('dashboard');
   };
 
-  const handleBackToList = () => {
-    setIsScheduleViewActive(false);
+  const handleSelectPatients = () => {
+    setActiveTab('patients');
     setMobileView('list');
   };
 
   const handleSelectSchedule = () => {
-    // If already on schedule in mobile, tapping Schedule again toggles back to list
-    if (isScheduleViewActive && mobileView === 'details') {
-      setIsScheduleViewActive(false);
-      setMobileView('list');
-    } else {
-      setIsScheduleViewActive(true);
-      setMobileView('details');
-    }
+    setActiveTab('schedule');
+  };
+
+  const handleSelectPatient = (patientId: string) => {
+    setSelectedPatientId(patientId);
+    setActiveTab('patients');
+    setMobileView('details');
+  };
+
+  const handleBackToList = () => {
+    setMobileView('list');
   };
 
   const handleAddPatient = (newPatient: Patient) => {
     const updatedPatients = [newPatient, ...patients];
     setPatients(updatedPatients);
     setSelectedPatientId(newPatient.id);
-    setIsScheduleViewActive(false);
+    setActiveTab('patients');
     setMobileView('details');
     syncToExcelStorage(updatedPatients, appointments, users, `Registered ${newPatient.fullName}`);
   };
@@ -427,6 +430,7 @@ export function App() {
       {/* Top Navbar */}
       <Navbar
         currentUser={currentUser}
+        activeTab={activeTab}
         onLogout={() => {
           setCurrentUser(null);
           showToast('You have logged out of the system.');
@@ -434,12 +438,11 @@ export function App() {
         onChangePasswordClick={() => setIsChangePasswordModalOpen(true)}
         onManageStaffClick={() => setIsManageStaffModalOpen(true)}
         onAddPatient={() => setIsAddPatientModalOpen(true)}
+        onSelectDashboard={handleSelectDashboard}
+        onSelectPatients={handleSelectPatients}
         onSelectSchedule={handleSelectSchedule}
         onExportExcel={handleExportExcel}
         onImportExcel={handleImportExcel}
-        isScheduleActive={isScheduleViewActive}
-        totalPatientsCount={patients.length}
-        totalAppointmentsCount={appointments.length}
         isExcelLinked={Boolean(excelFileHandle)}
         linkedFileName={linkedFileName}
         autoDownloadOnSave={autoDownloadOnSave}
@@ -447,56 +450,73 @@ export function App() {
         onConnectLocalFile={handleConnectLocalFile}
         onDisconnectLocalFile={handleDisconnectLocalFile}
         onRestoreDefaultExcel={handleRestoreDefaultExcel}
-        onLogoClick={handleBackToList}
+        onLogoClick={handleSelectDashboard}
       />
 
-      {/* MAIN CONTAINER: Responsive Layout */}
+      {/* MAIN CONTAINER: Dynamic View Switcher */}
       <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
-        {/* LEFT PANEL: Patient Directory */}
-        <div
-          className={`h-full w-full max-w-full md:w-80 lg:w-96 md:max-w-none shrink-0 border-r border-slate-200 transition-all ${
-            mobileView === 'list' ? 'block' : 'hidden md:block'
-          }`}
-        >
-          <PatientList
+        {activeTab === 'dashboard' ? (
+          <DashboardView
+            currentUser={currentUser}
             patients={patients}
-            selectedPatientId={selectedPatientId}
+            appointments={appointments}
             onSelectPatient={handleSelectPatient}
-            onAddPatientClick={() => setIsAddPatientModalOpen(true)}
+            onOpenAddPatient={() => setIsAddPatientModalOpen(true)}
+            onOpenAddAppointment={() => handleOpenAddAppointment()}
+            onNavigateToPatients={handleSelectPatients}
+            onNavigateToSchedule={handleSelectSchedule}
+            onManageStaffClick={() => setIsManageStaffModalOpen(true)}
           />
-        </div>
-
-        {/* RIGHT PANEL: Schedule View or Patient Details */}
-        <div
-          className={`h-full flex-1 overflow-hidden transition-all ${
-            mobileView === 'details' ? 'block' : 'hidden md:block'
-          }`}
-        >
-          {isScheduleViewActive ? (
-            <ScheduleView
-              patients={patients}
-              appointments={appointments}
-              onSelectPatient={handleSelectPatient}
-              onOpenAddAppointment={handleOpenAddAppointment}
-              onBackToList={handleBackToList}
-              currentUser={currentUser}
-            />
-          ) : selectedPatient ? (
-            <PatientDetails
-              patient={selectedPatient}
-              onBackToList={handleBackToList}
-              onUpdatePatient={handleUpdatePatient}
-              onDeletePatient={handleDeletePatient}
-              currentUserRole={currentUser.role}
-              currentUser={currentUser}
-            />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center bg-slate-50 p-8 text-center space-y-3">
-              <p className="text-slate-600 font-bold text-sm">No patient selected.</p>
-              <p className="text-xs text-slate-400">Select a patient from the left directory.</p>
+        ) : activeTab === 'schedule' ? (
+          <ScheduleView
+            patients={patients}
+            appointments={appointments}
+            onSelectPatient={handleSelectPatient}
+            onOpenAddAppointment={handleOpenAddAppointment}
+            onBackToList={handleSelectDashboard}
+            currentUser={currentUser}
+          />
+        ) : (
+          /* Patients Directory Two-Column Layout */
+          <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
+            {/* LEFT PANEL: Patient Directory */}
+            <div
+              className={`h-full w-full max-w-full md:w-80 lg:w-96 md:max-w-none shrink-0 border-r border-slate-200 transition-all ${
+                mobileView === 'list' ? 'block' : 'hidden md:block'
+              }`}
+            >
+              <PatientList
+                patients={patients}
+                selectedPatientId={selectedPatientId}
+                onSelectPatient={handleSelectPatient}
+                onAddPatientClick={() => setIsAddPatientModalOpen(true)}
+              />
             </div>
-          )}
-        </div>
+
+            {/* RIGHT PANEL: Patient Details */}
+            <div
+              className={`h-full flex-1 overflow-hidden transition-all ${
+                mobileView === 'details' ? 'block' : 'hidden md:block'
+              }`}
+            >
+              {selectedPatient ? (
+                <PatientDetails
+                  patient={selectedPatient}
+                  onBackToList={handleBackToList}
+                  onUpdatePatient={handleUpdatePatient}
+                  onDeletePatient={handleDeletePatient}
+                  currentUserRole={currentUser.role}
+                  currentUser={currentUser}
+                />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center bg-slate-50 p-8 text-center space-y-3">
+                  <p className="text-slate-600 font-bold text-sm">No patient selected.</p>
+                  <p className="text-xs text-slate-400">Select a patient from the left directory.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CLINICAL STATUS FOOTER BAR */}
