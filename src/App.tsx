@@ -276,6 +276,12 @@ export function App() {
           setActiveTab('dashboard');
           showToast(`Welcome back, ${user.fullName}!`);
         }}
+        onRegisterUser={(newUser) => {
+          handleAddUser(newUser);
+          setCurrentUser(newUser);
+          setActiveTab('dashboard');
+          showToast(`Welcome, ${newUser.fullName}! Account created and signed in.`);
+        }}
       />
     );
   }
