@@ -255,25 +255,8 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
               </div>
             </div>
 
-            {/* Actions: Prescribe Rx & Inline Edit Toggle Button & Doctor-Only Delete & Hide/Show Toggle */}
+            {/* Actions: Prescribe Rx & Inline Edit Toggle Button & Doctor-Only Delete */}
             <div className="flex items-center space-x-2 self-start sm:self-center flex-wrap gap-y-2">
-              {/* Hide / Show Overview Toggle Button */}
-              {!isEditing && (
-                <button
-                  onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
-                  className={`text-xs px-3 py-2 rounded-xl border flex items-center space-x-1.5 transition shadow-2xs cursor-pointer active:scale-95 ${
-                    isOverviewExpanded
-                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-                      : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200 font-semibold ring-1 ring-teal-400'
-                  }`}
-                  title={isOverviewExpanded ? 'Collapse Overview & Gestational Box' : 'Expand Overview & Gestational Box'}
-                >
-                  {isOverviewExpanded ? <EyeOff className="w-3.5 h-3.5 text-slate-500" /> : <Eye className="w-3.5 h-3.5 text-teal-600" />}
-                  <span>{isOverviewExpanded ? 'Hide Info' : 'Show Info'}</span>
-                  {isOverviewExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-teal-600" />}
-                </button>
-              )}
-
               {!isNurse && (
                 <button
                   onClick={() => handleOpenPrescriptionModal()}
@@ -508,18 +491,46 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                 </p>
               </div>
             </form>
-          ) : isOverviewExpanded ? (
-            /* READ ONLY EXPANDED VIEW MODE */
-            <div className="animate-in fade-in duration-150">
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
-                    <Phone className="w-3 h-3 text-slate-400" />
-                    <span>Contact Info</span>
-                  </span>
-                  <p className="font-semibold text-slate-800">{patient.contactNumber}</p>
-                  <p className="text-[11px] text-slate-500 truncate">{patient.email}</p>
+          ) : (
+            <>
+              {/* SUB-HEADER: PATIENT OVERVIEW & GESTATIONAL METRICS (COLLAPSIBLE HEADER) */}
+              <div className="pt-4 flex items-center justify-between border-t border-slate-100 mt-4">
+                <div className="flex items-center space-x-2">
+                  <Baby className="w-4 h-4 text-teal-600" />
+                  <h3 className="text-sm font-bold text-slate-800">
+                    Patient Demographics & Gestational Info
+                  </h3>
                 </div>
+
+                {/* Matching Styled Hide/Show Pill Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
+                  className={`text-xs px-3 py-1.5 rounded-xl border flex items-center space-x-1.5 transition shadow-2xs cursor-pointer active:scale-95 ${
+                    isOverviewExpanded
+                      ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                      : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200 font-semibold ring-1 ring-teal-400'
+                  }`}
+                  title={isOverviewExpanded ? 'Collapse Overview & Gestational Box' : 'Expand Overview & Gestational Box'}
+                >
+                  {isOverviewExpanded ? <EyeOff className="w-3.5 h-3.5 text-slate-500" /> : <Eye className="w-3.5 h-3.5 text-teal-600" />}
+                  <span>{isOverviewExpanded ? 'Hide Info' : 'Show Info'}</span>
+                  {isOverviewExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-teal-600" />}
+                </button>
+              </div>
+
+              {isOverviewExpanded ? (
+                /* READ ONLY EXPANDED VIEW MODE */
+                <div className="animate-in fade-in duration-150">
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        <span>Contact Info</span>
+                      </span>
+                      <p className="font-semibold text-slate-800">{patient.contactNumber}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{patient.email}</p>
+                    </div>
 
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
@@ -637,7 +648,9 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
               </div>
             </div>
           )}
-        </div>
+        </>
+      )}
+    </div>
 
         {/* SUB-HEADER: ILLNESS HISTORY TEXTAREA (COLLAPSIBLE) */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-xs transition">
