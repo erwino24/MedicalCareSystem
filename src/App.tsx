@@ -72,6 +72,7 @@ export function App() {
 
   const [notification, setNotification] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'details'>('list');
+  const [isSidebarListVisible, setIsSidebarListVisible] = useState<boolean>(true);
 
   // Excel Live File Handle & Auto-Download State
   const [excelFileHandle, setExcelFileHandle] = useState<FileSystemFileHandle | null>(null);
@@ -494,12 +495,16 @@ export function App() {
             onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
           />
         ) : (
-          /* Patients Directory Two-Column Layout */
+          /* Patients Directory Two-Column Layout (Desktop Collapsible & Mobile Adaptive) */
           <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
             {/* LEFT PANEL: Patient Directory */}
             <div
-              className={`h-full w-full max-w-full md:w-80 lg:w-96 md:max-w-none shrink-0 border-r border-slate-200 transition-all ${
-                mobileView === 'list' ? 'block' : 'hidden md:block'
+              className={`h-full shrink-0 border-r border-slate-200 transition-all duration-300 relative ${
+                mobileView === 'list'
+                  ? 'w-full block md:w-80 lg:w-96'
+                  : isSidebarListVisible
+                  ? 'hidden md:block md:w-80 lg:w-96'
+                  : 'hidden'
               }`}
             >
               <PatientList
@@ -512,10 +517,31 @@ export function App() {
 
             {/* RIGHT PANEL: Patient Details */}
             <div
-              className={`h-full flex-1 overflow-hidden transition-all ${
+              className={`h-full flex-1 overflow-hidden transition-all relative ${
                 mobileView === 'details' ? 'block' : 'hidden md:block'
               }`}
             >
+              {/* Desktop Floating Toggle Button to Hide / Show Directory List */}
+              <div className="hidden md:block absolute top-3.5 left-4 z-30">
+                <button
+                  onClick={() => setIsSidebarListVisible(!isSidebarListVisible)}
+                  className="bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-teal-800 border border-slate-200 shadow-sm px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition active:scale-95 cursor-pointer backdrop-blur-xs"
+                  title={isSidebarListVisible ? 'Hide Patient Directory for Full-Width View' : 'Show Patient Directory List'}
+                >
+                  {isSidebarListVisible ? (
+                    <>
+                      <span className="text-teal-600 font-bold">◀</span>
+                      <span className="text-[11px]">Hide List</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-teal-600 font-bold">▶</span>
+                      <span className="text-[11px] font-bold text-teal-900">Show Patients ({patients.length})</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               {selectedPatient ? (
                 <PatientDetails
                   patient={selectedPatient}
