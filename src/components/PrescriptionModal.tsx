@@ -135,33 +135,10 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
   const clinicAddress = "Suite 402, St. Luke's Medical Tower, Medical Drive, Metro Manila";
   const clinicContact = 'Tel: (02) 8888-1234 • Mobile: +63 917 123 4567';
 
-  // Prescription Items State
+  // Prescription Items State (Empty by default unless previously saved)
   const initialItems: PrescriptionItem[] = checkup?.prescriptions && checkup.prescriptions.length > 0
     ? checkup.prescriptions
-    : [
-        {
-          id: 'item-1',
-          genericName: 'Ferrous Sulfate + Folic Acid',
-          brandName: 'Hemarate FA',
-          dosage: '60mg / 400mcg',
-          form: 'Film-Coated Tablet',
-          frequency: 'Once daily',
-          instructions: 'Take 1 tablet once daily with meals or orange juice for iron deficiency anemia prevention.',
-          quantity: '#30 tablets',
-          duration: '30 days',
-        },
-        {
-          id: 'item-2',
-          genericName: 'Calcium Carbonate + Vitamin D3',
-          brandName: 'Caltrate Plus',
-          dosage: '500mg / 200 IU',
-          form: 'Tablet',
-          frequency: 'Twice daily',
-          instructions: 'Take 1 tablet twice daily after meals. Separate from iron supplement by at least 2 hours.',
-          quantity: '#60 tablets',
-          duration: '30 days',
-        },
-      ];
+    : [];
 
   const [prescriptionList, setPrescriptionList] = useState<PrescriptionItem[]>(initialItems);
   const [specialInstructions, setSpecialInstructions] = useState<string>(
@@ -488,18 +465,39 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
 
               {/* Current Meds List */}
               <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
-                <h4 className="font-bold text-sm text-slate-800 flex items-center justify-between">
-                  <span>Current Prescribed Medications ({prescriptionList.length})</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-bold text-sm text-slate-800">
+                      Current Prescribed Medications ({prescriptionList.length})
+                    </h4>
+                    {prescriptionList.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setPrescriptionList([])}
+                        className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded transition cursor-pointer"
+                        title="Remove all medications from prescription"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
                   <button
+                    type="button"
                     onClick={() => setActiveTab('preview')}
                     className="text-teal-700 hover:text-teal-900 text-xs font-semibold hover:underline cursor-pointer"
                   >
                     View Rx Pad Preview ➔
                   </button>
-                </h4>
+                </div>
 
                 {prescriptionList.length === 0 ? (
-                  <p className="text-slate-400 text-xs py-4 text-center">No medications added yet.</p>
+                  <div className="p-6 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center space-y-2">
+                    <p className="text-slate-500 font-semibold text-xs">No medications added to prescription yet.</p>
+                    <p className="text-[11px] text-slate-400">
+                      Click standard clinical presets above or enter a custom medication in the form to add.
+                    </p>
+                  </div>
                 ) : (
                   <div className="divide-y divide-slate-100">
                     {prescriptionList.map((item, index) => (
