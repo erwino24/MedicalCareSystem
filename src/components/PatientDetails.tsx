@@ -657,9 +657,18 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                 </span>
               )}
             </div>
-            <div className="flex items-center space-x-1 text-xs text-slate-400 group-hover:text-slate-700">
-              <span className="text-[11px]">{isHistoryExpanded ? 'Hide' : 'Show'}</span>
-              {isHistoryExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            
+            {/* Matching Styled Hide/Show Pill Button */}
+            <div
+              className={`text-xs px-3 py-1.5 rounded-xl border flex items-center space-x-1.5 transition shadow-2xs ${
+                isHistoryExpanded
+                  ? 'bg-slate-100 group-hover:bg-slate-200 text-slate-700 border-slate-200'
+                  : 'bg-teal-50 group-hover:bg-teal-100 text-teal-800 border-teal-200 font-semibold ring-1 ring-teal-400'
+              }`}
+            >
+              {isHistoryExpanded ? <EyeOff className="w-3.5 h-3.5 text-slate-500" /> : <Eye className="w-3.5 h-3.5 text-teal-600" />}
+              <span>{isHistoryExpanded ? 'Hide Info' : 'Show Info'}</span>
+              {isHistoryExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-teal-600" />}
             </div>
           </button>
 
