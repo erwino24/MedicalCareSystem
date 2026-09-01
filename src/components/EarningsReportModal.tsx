@@ -301,11 +301,34 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto font-sans">
-      <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto font-sans print:p-0 print:bg-white print:static print:inset-auto">
+      <div
+        id="printable-earnings-report"
+        className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150 print:max-h-none print:overflow-visible print:shadow-none print:border-none print:w-full print:max-w-none print:my-0"
+      >
         
-        {/* HEADER */}
-        <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between shrink-0">
+        {/* PRINT-ONLY OFFICIAL CLINIC STATEMENT HEADER */}
+        <div className="hidden print:block mb-6 border-b-2 border-slate-900 pb-4 pt-2">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">MEDICAL MANAGEMENT SYSTEM</h1>
+              <p className="text-sm font-bold text-teal-800">Official Clinical Practice Financial & Consultation Earnings Report</p>
+              <p className="text-xs text-slate-600 mt-1">
+                Practitioner: <strong>{currentUser.fullName}</strong> ({currentUser.title || (currentUser.role === 'DOCTOR' ? 'Physician / OB-GYN' : 'Clinical Staff')})
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="inline-block bg-teal-50 border border-teal-300 px-3 py-1.5 rounded-lg text-right">
+                <p className="text-[10px] uppercase font-bold text-slate-500">Report Scope</p>
+                <p className="text-sm font-extrabold text-teal-900">{dateInterval.label}</p>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">Date Printed: {format(new Date(), 'MMMM d, yyyy, h:mm a')}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* SCREEN HEADER (Hidden on Print) */}
+        <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between shrink-0 no-print">
           <div className="flex items-center space-x-3">
             <div className="p-2.5 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-xl shadow-xs">
               <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -351,8 +374,8 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
           </div>
         </div>
 
-        {/* CONTROLS BAR (PERIOD SELECTOR & SPECIALTY FILTER) */}
-        <div className="px-5 sm:px-6 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+        {/* CONTROLS BAR (Hidden on Print) */}
+        <div className="px-5 sm:px-6 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0 no-print">
           {/* Quick Period Buttons */}
           <div className="flex items-center flex-wrap gap-1.5 text-xs font-medium">
             <button
@@ -627,9 +650,9 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                 <p className="text-xs text-slate-400 mt-0.5">Try selecting a different week, month, or custom date range above.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 print:border-slate-300">
                 <table className="w-full text-left text-xs text-slate-700 min-w-[700px]">
-                  <thead className="bg-slate-100/90 text-slate-600 font-semibold border-b border-slate-200">
+                  <thead className="bg-slate-100/90 text-slate-600 font-semibold border-b border-slate-200 print:bg-slate-100">
                     <tr>
                       <th className="py-2.5 px-3 w-[100px]">Date</th>
                       <th className="py-2.5 px-3 w-[160px]">Patient Name</th>
@@ -659,7 +682,7 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
                         </td>
                         <td className="py-2.5 px-3 align-top text-right font-mono font-bold">
                           {rec.fee > 0 ? (
-                            <span className="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            <span className="text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 print:bg-transparent print:border-none">
                               ₱{rec.fee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                           ) : (
@@ -683,10 +706,26 @@ export const EarningsReportModal: React.FC<EarningsReportModalProps> = ({
               </div>
             )}
           </div>
+
+          {/* PRINT-ONLY SIGNATURE FOOTER */}
+          <div className="hidden print:block mt-8 pt-6 border-t-2 border-slate-300">
+            <div className="flex justify-between items-end">
+              <div className="text-xs text-slate-500 space-y-1">
+                <p className="font-semibold text-slate-700">Medical Management System • Clinical Records</p>
+                <p>This is a system-generated official clinical practice financial statement.</p>
+                <p className="text-[10px]">Confidential Medical Administration Record</p>
+              </div>
+              <div className="text-center w-72">
+                <div className="border-b-2 border-slate-800 mb-2 pb-6"></div>
+                <p className="text-sm font-black text-slate-900">{currentUser.fullName}</p>
+                <p className="text-xs font-semibold text-slate-600">{currentUser.title || 'Attending Physician / Clinical Practitioner'}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* FOOTER */}
-        <div className="px-5 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 text-xs text-slate-500">
+        <div className="px-5 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 text-xs text-slate-500 no-print">
           <div>
             Prepared by: <strong className="text-slate-800">{currentUser.fullName}</strong> ({currentUser.title}) • {format(new Date(), 'MMMM d, yyyy')}
           </div>

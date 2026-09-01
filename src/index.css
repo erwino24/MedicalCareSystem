@@ -35,15 +35,19 @@
   background: #94a3b8;
 }
 
-/* Printable Prescription Styles */
+/* Printable Prescription & Financial Report Styles */
 @media print {
   body * {
     visibility: hidden;
   }
-  #printable-prescription, #printable-prescription * {
+  #printable-prescription,
+  #printable-prescription *,
+  #printable-earnings-report,
+  #printable-earnings-report * {
     visibility: visible;
   }
-  #printable-prescription {
+  #printable-prescription,
+  #printable-earnings-report {
     position: absolute;
     left: 0;
     top: 0;
@@ -55,6 +59,9 @@
     border: none !important;
     background: white !important;
     color: black !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
