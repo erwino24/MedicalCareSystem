@@ -16,7 +16,8 @@ import {
   LayoutDashboard,
   Users,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import type { PractitionerUser } from '../types/patient';
 import { isFileSystemAccessSupported } from '../utils/excelService';
@@ -307,6 +308,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </button>
 
+                  <a
+                    href="/MaternalCare_OBGYN_End_to_End_Features.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsExcelOpen(false)}
+                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 text-slate-700 flex items-center space-x-2 transition border-t border-slate-100 cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-teal-600 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-slate-800">Features Specification (PDF)</p>
+                      <p className="text-[10px] text-slate-500">Download End-to-End System Manual</p>
+                    </div>
+                  </a>
+
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -533,18 +548,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <span>Export Excel Database</span>
                   </button>
 
-                  {onManageStaffClick && (
-                    <button
-                      onClick={() => {
-                        setIsMobileDrawerOpen(false);
-                        onManageStaffClick();
-                      }}
-                      className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:bg-slate-50 text-left transition cursor-pointer"
-                    >
-                      <UserCheck className="w-4 h-4 text-teal-600 shrink-0" />
-                      <span>Manage Staff Accounts</span>
-                    </button>
-                  )}
+                  <a
+                    href="/MaternalCare_OBGYN_End_to_End_Features.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                    className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-700 hover:bg-slate-50 text-left transition cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-teal-600 shrink-0" />
+                    <span>Features Specification (PDF)</span>
+                  </a>
                 </div>
               )}
             </div>
