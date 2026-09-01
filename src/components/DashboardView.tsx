@@ -17,8 +17,10 @@ import {
   MessageSquare,
   Eye,
   EyeOff,
-  Wallet
+  Wallet,
+  TrendingUp
 } from 'lucide-react';
+import { EarningsReportModal } from './EarningsReportModal';
 
 interface DashboardViewProps {
   currentUser: PractitionerUser;
@@ -53,6 +55,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [currentMonthDate, setCurrentMonthDate] = useState<Date>(new Date());
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(null);
   const [isUpcomingListVisible, setIsUpcomingListVisible] = useState<boolean>(true);
+  const [isEarningsReportOpen, setIsEarningsReportOpen] = useState<boolean>(false);
 
   // Month navigation
   const handlePrevMonth = () => setCurrentMonthDate((prev) => subMonths(prev, 1));
@@ -70,10 +73,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const monthName = format(currentMonthDate, 'MMMM yyyy');
 
   // Trimester & gestational breakdowns
-  const patientsWithMetrics = patients.map((p) => ({
-    patient: p,
-    metrics: calculateObGynMetrics(p.lmp),
-  }));
+  const patientsWithMetrics = patients.map((patient) => {
+    return {
+      patient,
+      metrics: calculateObGynMetrics(patient.lmp),
+    };
+  });
 
   const firstTrimester = patientsWithMetrics.filter((item) => item.metrics.trimester === '1st');
   const secondTrimester = patientsWithMetrics.filter((item) => item.metrics.trimester === '2nd');
@@ -158,6 +163,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Calendar className="w-4 h-4 text-teal-300" />
               <span>+ Book Visit</span>
             </button>
+            <button
+              onClick={() => setIsEarningsReportOpen(true)}
+              className="bg-emerald-600/80 hover:bg-emerald-600 text-white font-semibold px-3.5 py-2.5 rounded-xl border border-emerald-400/30 transition flex items-center space-x-2 text-xs sm:text-sm active:scale-95 cursor-pointer shadow-xs"
+              title="Open Weekly and Monthly Earnings Report"
+            >
+              <TrendingUp className="w-4 h-4 text-emerald-200" />
+              <span>Earnings Reports</span>
+            </button>
           </div>
         </div>
 
@@ -231,18 +244,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Card 4: Total Earnings (₱) */}
-          <div className="bg-gradient-to-br from-emerald-500/10 via-teal-50/70 to-white p-5 rounded-2xl border border-emerald-300 shadow-2xs hover:border-emerald-500 transition">
+          {/* Card 4: Total Earnings (₱) - Click to Open Reports */}
+          <div
+            onClick={() => setIsEarningsReportOpen(true)}
+            className="bg-gradient-to-br from-emerald-500/10 via-teal-50/70 to-white p-5 rounded-2xl border border-emerald-300 shadow-2xs hover:border-emerald-500 hover:shadow-md transition cursor-pointer group"
+            title="Click to view weekly and monthly earnings reports"
+          >
             <div className="flex items-center justify-between">
-              <div className="p-3 bg-emerald-600 text-white rounded-xl shadow-xs">
+              <div className="p-3 bg-emerald-600 text-white rounded-xl shadow-xs group-hover:bg-emerald-700 transition">
                 <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <span className="text-[11px] font-bold text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs font-mono">
-                PHP (₱)
+              <span className="text-[11px] font-bold text-emerald-900 bg-emerald-100 group-hover:bg-emerald-200 px-2.5 py-0.5 rounded-full border border-emerald-200 shadow-2xs font-mono flex items-center space-x-1 transition">
+                <span>Reports 📊</span>
               </span>
             </div>
             <div className="mt-3">
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Earnings</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider flex items-center justify-between">
+                <span>Total Earnings</span>
+                <span className="text-[10px] text-teal-700 font-normal lowercase group-hover:underline">view breakdown →</span>
+              </p>
               <p className="text-2xl sm:text-3xl font-black text-emerald-950 font-mono mt-0.5">
                 ₱{totalRevenuePhp.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
@@ -786,6 +806,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           )}
         </div>
       </div>
+
+      {/* CLINIC FINANCIALS & EARNINGS REPORT MODAL */}
+      <EarningsReportModal
+        isOpen={isEarningsReportOpen}
+        onClose={() => setIsEarningsReportOpen(false)}
+        patients={patients}
+        currentUser={currentUser}
+      />
     </div>
   );
 };
