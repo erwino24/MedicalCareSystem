@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import type { Patient, CheckupRecord, Appointment, PractitionerUser } from '../types/patient';
+import type { Patient, PatientCareType, CheckupRecord, Appointment, PractitionerUser } from '../types/patient';
 import { calculateObGynMetrics } from './obgynCalculator';
 import { format } from 'date-fns';
 
@@ -42,6 +42,7 @@ export function buildClinicWorkbook(
     return {
       'Patient ID': p.id,
       'Full Name': p.fullName,
+      'Clinical Care Category': p.careType || 'Pregnant',
       'Age (Years)': p.age,
       'Contact Number': p.contactNumber,
       'Email': p.email,
@@ -318,6 +319,7 @@ export function importClinicDatabaseFromExcel(file: File): Promise<ExcelImportRe
           return {
             id: patId,
             fullName: String(row['Full Name'] || row['fullName'] || row['Name'] || 'Unnamed Patient'),
+            careType: (row['Clinical Care Category'] || row['careType'] || 'Pregnant') as PatientCareType,
             age: Number(row['Age (Years)'] || row['age']) || 25,
             contactNumber: String(row['Contact Number'] || row['contactNumber'] || 'N/A'),
             email: String(row['Email'] || row['email'] || 'N/A'),

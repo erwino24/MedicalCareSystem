@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Patient } from '../types/patient';
 import { calculateObGynMetrics } from '../utils/obgynCalculator';
-import { Search, UserPlus, Calendar, ChevronRight, Baby, Filter } from 'lucide-react';
+import { Search, UserPlus, Calendar, ChevronRight, Baby } from 'lucide-react';
 
 interface PatientListProps {
   patients: Patient[];
@@ -17,10 +17,10 @@ export const PatientList: React.FC<PatientListProps> = ({
   onAddPatientClick,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterTrimester, setFilterTrimester] = useState<string>('ALL');
+  const [filterCareType, setFilterCareType] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<'ALL' | 'Active' | 'Inactive'>('ALL');
 
-  // Filter patients by search term, trimester, and active/inactive status
+  // Filter patients by search term, careType, and active/inactive status
   const filteredPatients = patients.filter((patient) => {
     const matchesSearch =
       patient.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,9 +35,13 @@ export const PatientList: React.FC<PatientListProps> = ({
       return false;
     }
 
-    if (filterTrimester === 'ALL') return true;
-    const metrics = calculateObGynMetrics(patient.lmp);
-    return metrics.trimester === filterTrimester;
+    const patientCareType = patient.careType || 'Pregnant';
+    if (filterCareType !== 'ALL') {
+      if (filterCareType === 'Pregnant' && patientCareType !== 'Pregnant') return false;
+      if (filterCareType !== 'Pregnant' && patientCareType !== filterCareType) return false;
+    }
+
+    return true;
   });
 
   // Alphabetical sort by full name
@@ -78,7 +82,7 @@ export const PatientList: React.FC<PatientListProps> = ({
           )}
         </div>
 
-        {/* Status and Trimester Filter Pills */}
+        {/* Care Type and Status Filter Pills */}
         <div className="space-y-1.5 w-full">
           {/* Row 1: Status Filter Pills */}
           <div className="flex items-center space-x-1 overflow-x-auto pb-0.5 text-xs no-scrollbar w-full">
@@ -102,20 +106,29 @@ export const PatientList: React.FC<PatientListProps> = ({
             ))}
           </div>
 
-          {/* Row 2: Trimester Filter Pills */}
-          <div className="flex items-center space-x-1 overflow-x-auto pb-1 text-xs no-scrollbar w-full max-w-full">
-            <Filter className="w-3 h-3 text-slate-400 shrink-0 mr-0.5" />
-            {['ALL', '1st', '2nd', '3rd'].map((tri) => (
+          {/* Row 2: Care Category Filter Pills */}
+          <div className="flex items-center space-x-1 overflow-x-auto pb-0.5 text-xs no-scrollbar w-full">
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mr-1 shrink-0">Category:</span>
+            {[
+              { id: 'ALL', label: 'All Cases' },
+              { id: 'Pregnant', label: '🤰 Pregnant' },
+              { id: 'Pediatric / Baby Care', label: '👶 Baby' },
+              { id: 'Anti-Rabies / Animal Bite', label: '🐕 Rabies' },
+              { id: 'Vaccination / Immunization', label: '💉 Vaccine' },
+              { id: 'Dengue / Fever', label: '🦟 Dengue' },
+              { id: 'General Illness', label: '🤒 Sick / OPD' },
+              { id: 'Chronic Care', label: '🩺 Chronic' },
+            ].map((cat) => (
               <button
-                key={tri}
-                onClick={() => setFilterTrimester(tri)}
+                key={cat.id}
+                onClick={() => setFilterCareType(cat.id)}
                 className={`px-2 py-0.5 rounded-md text-[11px] font-medium whitespace-nowrap transition cursor-pointer shrink-0 ${
-                  filterTrimester === tri
-                    ? 'bg-teal-600 text-white shadow-xs'
+                  filterCareType === cat.id
+                    ? 'bg-teal-700 text-white shadow-xs'
                     : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                {tri === 'ALL' ? 'All Trimesters' : `${tri} Tri`}
+                {cat.label}
               </button>
             ))}
           </div>
@@ -140,6 +153,7 @@ export const PatientList: React.FC<PatientListProps> = ({
         ) : (
           sortedPatients.map((patient) => {
             const isSelected = patient.id === selectedPatientId;
+            const isPregnant = (patient.careType || 'Pregnant') === 'Pregnant';
             const metrics = calculateObGynMetrics(patient.lmp);
             const lastCheckup = patient.checkups[0];
             const isInactive = patient.status === 'Inactive';
@@ -169,9 +183,27 @@ export const PatientList: React.FC<PatientListProps> = ({
                     }`}>
                       {patient.fullName}
                     </h3>
-                    <span className="text-[10px] sm:text-[11px] bg-slate-100 text-slate-600 font-mono px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
-                      G{patient.gravida}P{patient.para}
-                    </span>
+                    
+                    {isPregnant ? (
+                      <span className="text-[10px] sm:text-[11px] bg-slate-100 text-slate-600 font-mono px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
+                        G{patient.gravida}P{patient.para}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] bg-teal-50 text-teal-800 font-semibold px-1.5 py-0.2 rounded border border-teal-200 shrink-0 truncate max-w-[90px]">
+                        {patient.careType === 'Anti-Rabies / Animal Bite'
+                          ? '🐕 Rabies'
+                          : patient.careType === 'Pediatric / Baby Care'
+                          ? '👶 Baby'
+                          : patient.careType === 'Vaccination / Immunization'
+                          ? '💉 Vaccine'
+                          : patient.careType === 'Dengue / Fever'
+                          ? '🦟 Dengue'
+                          : patient.careType === 'Chronic Care'
+                          ? '🩺 Chronic'
+                          : 'General'}
+                      </span>
+                    )}
+
                     {isInactive && (
                       <span className="text-[9px] bg-slate-200 text-slate-600 font-semibold px-1.5 py-0.2 rounded shrink-0">
                         Inactive
@@ -193,19 +225,45 @@ export const PatientList: React.FC<PatientListProps> = ({
                   )}
                 </div>
 
-                {/* Right Badge (AOG) */}
+                {/* Right Badge */}
                 <div className="flex flex-col items-end shrink-0 space-y-1 pl-1">
-                  <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold shadow-2xs whitespace-nowrap ${
-                    isInactive
-                      ? 'bg-slate-100 text-slate-600 border border-slate-200'
-                      : metrics.trimester === '3rd'
-                      ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                      : metrics.trimester === '2nd'
-                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                      : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                  }`}>
-                    AOG: {metrics.aogFormatted}
-                  </span>
+                  {isPregnant ? (
+                    <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold shadow-2xs whitespace-nowrap ${
+                      isInactive
+                        ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                        : metrics.trimester === '3rd'
+                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                        : metrics.trimester === '2nd'
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      AOG: {metrics.aogFormatted}
+                    </span>
+                  ) : (
+                    <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold shadow-2xs whitespace-nowrap ${
+                      patient.careType === 'Anti-Rabies / Animal Bite'
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                        : patient.careType === 'Dengue / Fever'
+                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                        : patient.careType === 'Pediatric / Baby Care'
+                        ? 'bg-sky-100 text-sky-800 border border-sky-300'
+                        : patient.careType === 'Vaccination / Immunization'
+                        ? 'bg-violet-100 text-violet-800 border border-violet-300'
+                        : 'bg-teal-100 text-teal-800 border border-teal-200'
+                    }`}>
+                      {patient.careType === 'Anti-Rabies / Animal Bite'
+                        ? 'Anti-Rabies'
+                        : patient.careType === 'Dengue / Fever'
+                        ? 'Dengue Care'
+                        : patient.careType === 'Pediatric / Baby Care'
+                        ? 'Pediatric'
+                        : patient.careType === 'Vaccination / Immunization'
+                        ? 'Vaccine Dose'
+                        : patient.careType === 'Chronic Care'
+                        ? 'Chronic Care'
+                        : 'Outpatient'}
+                    </span>
+                  )}
                   <div className="flex items-center text-[10px] text-slate-400 group-hover:text-teal-600 transition">
                     <span>Details</span>
                     <ChevronRight className="w-3 h-3 ml-0.5" />

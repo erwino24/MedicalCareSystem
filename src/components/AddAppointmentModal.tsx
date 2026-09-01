@@ -340,17 +340,29 @@ export const AddAppointmentModal: React.FC<AddAppointmentModalProps> = ({
 
           {/* Appointment Type */}
           <div>
-            <label className="font-semibold text-slate-700 block mb-1">Consultation Purpose / Category</label>
+            <label className="font-semibold text-slate-700 block mb-1">Consultation Purpose / Clinical Category</label>
             <select
               value={appointmentType}
               onChange={(e) => setAppointmentType(e.target.value as Appointment['type'])}
               className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-semibold focus:ring-2 focus:ring-teal-500 focus:bg-white"
             >
-              <option value="Routine Prenatal">Routine Prenatal Check-up</option>
-              <option value="Ultrasound Scan">Ultrasound Scan (Anomaly / TVS)</option>
-              <option value="High Risk Consult">High Risk Obstetric Consult</option>
-              <option value="Postpartum Check">Postpartum Follow-up</option>
-              <option value="First Prenatal Visit">Initial First Prenatal Visit</option>
+              <optgroup label="Obstetrics & Prenatal">
+                <option value="Routine Prenatal">🤰 Routine Prenatal Check-up</option>
+                <option value="Ultrasound Scan">🔬 Ultrasound Scan (Pelvic / Anomaly / TVS)</option>
+                <option value="High Risk Consult">⚠️ High Risk Obstetric Consult</option>
+                <option value="First Prenatal Visit">📋 Initial First Prenatal Visit</option>
+                <option value="Postpartum Check">🤱 Postpartum Follow-up</option>
+              </optgroup>
+              <optgroup label="Pediatric & Preventive Care">
+                <option value="Pediatric / Baby Check">👶 Pediatric / Baby & Newborn Check</option>
+                <option value="Anti-Rabies Vaccine Dose">🐕 Anti-Rabies Vaccine Dose / Prophylaxis</option>
+                <option value="Vaccine Shot / Booster">💉 Routine Vaccine Shot / Booster Dose</option>
+              </optgroup>
+              <optgroup label="General Medicine & Acute Care">
+                <option value="Dengue / Fever Check">🦟 Dengue / Acute Fever Triage</option>
+                <option value="General Consultation">🤒 General Medical Sickness Consult</option>
+                <option value="Chronic Care Follow-up">🩺 Chronic Disease Follow-up</option>
+              </optgroup>
             </select>
           </div>
 

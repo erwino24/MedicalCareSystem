@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Patient, Appointment, CheckupRecord, PrescriptionItem, PractitionerUser } from '../types/patient';
+import type { Patient, PatientCareType, Appointment, CheckupRecord, PrescriptionItem, PractitionerUser } from '../types/patient';
 import { calculateObGynMetrics } from '../utils/obgynCalculator';
 import { format } from 'date-fns';
 import { CheckupTable } from './CheckupTable';
@@ -23,7 +23,11 @@ import {
   ChevronUp,
   Eye,
   EyeOff,
-  MessageSquare
+  MessageSquare,
+  Activity,
+  Stethoscope,
+  Syringe,
+  ShieldCheck
 } from 'lucide-react';
 
 interface PatientDetailsProps {
@@ -56,6 +60,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
 
   // Editable Form State
+  const [careType, setCareType] = useState<PatientCareType>(patient.careType || 'Pregnant');
   const [fullName, setFullName] = useState(patient.fullName);
   const [age, setAge] = useState(patient.age);
   const [contactNumber, setContactNumber] = useState(patient.contactNumber);
@@ -80,11 +85,15 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
   const [allergies, setAllergies] = useState(patient.allergies || '');
   const [status, setStatus] = useState<'Active' | 'Inactive'>(patient.status || 'Active');
 
+  const currentCareType = isEditing ? careType : (patient.careType || 'Pregnant');
+  const isPregnant = currentCareType === 'Pregnant';
+
   // Calculate live AOG & EDD from current LMP (either in edit state or patient prop)
   const activeLmp = isEditing ? lmp : patient.lmp;
   const obgynMetrics = calculateObGynMetrics(activeLmp);
 
   const handleStartEdit = () => {
+    setCareType(patient.careType || 'Pregnant');
     setFullName(patient.fullName);
     setAge(patient.age);
     setContactNumber(patient.contactNumber);
@@ -121,6 +130,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
 
     onUpdatePatient({
       ...patient,
+      careType,
       fullName,
       age: Number(age),
       contactNumber,
@@ -131,9 +141,9 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
       emergencyContactNumber: emergencyContactNumber.trim() || undefined,
       emergencyContactAddress: emergencyContactAddress.trim() || undefined,
       bloodType,
-      gravida: Number(gravida),
-      para: Number(para),
-      lmp,
+      gravida: isPregnant ? Number(gravida) : 0,
+      para: isPregnant ? Number(para) : 0,
+      lmp: isPregnant ? lmp : patient.lmp,
       illnessHistory,
       allergies,
       status,
@@ -255,9 +265,52 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                   <span className="bg-teal-100 text-teal-800 font-semibold text-xs px-2.5 py-1 rounded-full border border-teal-200">
                     {patient.age} Yrs Old
                   </span>
-                  <span className="bg-slate-100 text-slate-700 font-mono font-bold text-xs px-2.5 py-1 rounded-full border border-slate-200">
-                    Obstetric History: G{patient.gravida} P{patient.para}
+
+                  {/* Care Type Badge */}
+                  <span
+                    className={`font-bold text-xs px-2.5 py-1 rounded-full border flex items-center space-x-1 shadow-2xs ${
+                      patient.careType === 'Anti-Rabies / Animal Bite'
+                        ? 'bg-amber-50 text-amber-900 border-amber-300'
+                        : patient.careType === 'Pediatric / Baby Care'
+                        ? 'bg-sky-50 text-sky-900 border-sky-300'
+                        : patient.careType === 'Vaccination / Immunization'
+                        ? 'bg-violet-50 text-violet-900 border-violet-300'
+                        : patient.careType === 'Dengue / Fever'
+                        ? 'bg-rose-50 text-rose-900 border-rose-300'
+                        : patient.careType === 'Chronic Care'
+                        ? 'bg-purple-50 text-purple-900 border-purple-300'
+                        : patient.careType === 'General Illness'
+                        ? 'bg-blue-50 text-blue-900 border-blue-300'
+                        : patient.careType === 'Routine Checkup'
+                        ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                        : 'bg-teal-50 text-teal-900 border-teal-300'
+                    }`}
+                  >
+                    <span>
+                      {patient.careType === 'Anti-Rabies / Animal Bite'
+                        ? '🐕 Anti-Rabies / Animal Bite'
+                        : patient.careType === 'Pediatric / Baby Care'
+                        ? '👶 Pediatric / Baby Care'
+                        : patient.careType === 'Vaccination / Immunization'
+                        ? '💉 Vaccine / Immunization'
+                        : patient.careType === 'Dengue / Fever'
+                        ? '🦟 Dengue / Fever Care'
+                        : patient.careType === 'Chronic Care'
+                        ? '🩺 Chronic Care'
+                        : patient.careType === 'General Illness'
+                        ? '🤒 General Illness'
+                        : patient.careType === 'Routine Checkup'
+                        ? '🏥 Routine Checkup'
+                        : '🤰 Pregnant (OB-GYN)'}
+                    </span>
                   </span>
+
+                  {/* Obstetric Parity shown ONLY for Pregnant mothers */}
+                  {isPregnant && (
+                    <span className="bg-slate-100 text-slate-700 font-mono font-bold text-xs px-2.5 py-1 rounded-full border border-slate-200">
+                      Obstetric: G{patient.gravida} P{patient.para}
+                    </span>
+                  )}
 
                   {/* Active / Inactive Status Badge (Non-clickable, editable via Edit Info) */}
                   <span
@@ -268,7 +321,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                     }`}
                   >
                     <span className={`w-2 h-2 rounded-full shrink-0 ${ (patient.status || 'Active') === 'Active' ? 'bg-emerald-500' : 'bg-slate-400' }`} />
-                    <span>{(patient.status || 'Active') === 'Active' ? 'Active Prenatal' : 'Inactive / Delivered'}</span>
+                    <span>{(patient.status || 'Active') === 'Active' ? 'Active Case' : 'Inactive / Discharged'}</span>
                   </span>
 
                   {isNurse && (
@@ -442,6 +495,34 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                 </div>
               </div>
 
+              {/* Care Type Selection in Edit Mode */}
+              <div className="sm:col-span-2 lg:col-span-3 bg-gradient-to-r from-teal-50/90 to-cyan-50/90 border border-teal-200 p-3 rounded-xl space-y-1.5">
+                <label className="font-bold text-slate-800 text-xs flex items-center justify-between">
+                  <span className="flex items-center space-x-1.5 text-teal-950">
+                    <Activity className="w-4 h-4 text-teal-700" />
+                    <span>Clinical Care Category / Patient Type</span>
+                  </span>
+                  <span className="text-[10px] text-teal-700 bg-teal-100/80 px-2 py-0.5 rounded-full font-semibold">
+                    Multi-Specialty Support
+                  </span>
+                </label>
+
+                <select
+                  value={careType}
+                  onChange={(e) => setCareType(e.target.value as PatientCareType)}
+                  className="w-full bg-white border border-teal-300 rounded-lg p-2 text-xs font-bold text-teal-950 focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value="Pregnant">🤰 Pregnant / Prenatal Care (OB-GYN - Enables AOG & EDD)</option>
+                  <option value="Pediatric / Baby Care">👶 Pediatric / Baby & Child Care</option>
+                  <option value="Anti-Rabies / Animal Bite">🐕 Anti-Rabies / Animal Bite Post-Exposure Care</option>
+                  <option value="Vaccination / Immunization">💉 Vaccination & Immunization Tracker</option>
+                  <option value="Dengue / Fever">🦟 Dengue / Viral Fever Monitoring</option>
+                  <option value="General Illness">🤒 General Medical / Outpatient Sickness</option>
+                  <option value="Chronic Care">🩺 Chronic Care (Hypertension, Diabetes, Maintenance)</option>
+                  <option value="Routine Checkup">🏥 Routine / Preventive Health Checkup</option>
+                </select>
+              </div>
+
               <div>
                 <label className="font-semibold text-slate-700 block mb-1">Blood Type</label>
                 <select
@@ -462,72 +543,84 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                   onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive')}
                   className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-teal-500 font-medium"
                 >
-                  <option value="Active">🟢 Active (Current Prenatal Care)</option>
+                  <option value="Active">🟢 Active (Current Clinic Care)</option>
                   <option value="Inactive">⚪ Inactive (Delivered / Discharged / Transferred)</option>
                 </select>
               </div>
 
-              <div className="flex space-x-2">
-                <div className="w-1/2">
-                  <label className="font-semibold text-slate-700 block mb-1">
-                    Gravida (G) {isNurse && <span className="text-[10px] text-amber-600 font-normal">(Doctor Only)</span>}
-                  </label>
-                  <input
-                    type="number"
-                    disabled={isNurse}
-                    value={gravida}
-                    onChange={(e) => setGravida(Number(e.target.value))}
-                    className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-teal-500 ${
-                      isNurse ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-slate-50 border-slate-300'
-                    }`}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label className="font-semibold text-slate-700 block mb-1">
-                    Para (P) {isNurse && <span className="text-[10px] text-amber-600 font-normal">(Doctor Only)</span>}
-                  </label>
-                  <input
-                    type="number"
-                    disabled={isNurse}
-                    value={para}
-                    onChange={(e) => setPara(Number(e.target.value))}
-                    className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-teal-500 ${
-                      isNurse ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-slate-50 border-slate-300'
-                    }`}
-                  />
-                </div>
-              </div>
+              {/* OBSTETRIC FIELDS ONLY SHOWN IF PREGNANT */}
+              {isPregnant ? (
+                <>
+                  <div className="flex space-x-2">
+                    <div className="w-1/2">
+                      <label className="font-semibold text-slate-700 block mb-1">
+                        Gravida (G) {isNurse && <span className="text-[10px] text-amber-600 font-normal">(Doctor Only)</span>}
+                      </label>
+                      <input
+                        type="number"
+                        disabled={isNurse}
+                        value={gravida}
+                        onChange={(e) => setGravida(Number(e.target.value))}
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-teal-500 ${
+                          isNurse ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-slate-50 border-slate-300'
+                        }`}
+                      />
+                    </div>
+                    <div className="w-1/2">
+                      <label className="font-semibold text-slate-700 block mb-1">
+                        Para (P) {isNurse && <span className="text-[10px] text-amber-600 font-normal">(Doctor Only)</span>}
+                      </label>
+                      <input
+                        type="number"
+                        disabled={isNurse}
+                        value={para}
+                        onChange={(e) => setPara(Number(e.target.value))}
+                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-teal-500 ${
+                          isNurse ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-200' : 'bg-slate-50 border-slate-300'
+                        }`}
+                      />
+                    </div>
+                  </div>
 
-              <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 sm:col-span-2 lg:col-span-3">
-                <label className="font-bold text-teal-900 block mb-1 flex items-center space-x-1">
-                  <Calendar className="w-4 h-4 text-teal-600" />
-                  <span>Last Menstrual Period (LMP)</span>
-                  {isNurse && <span className="text-xs text-amber-700 font-normal ml-2">(Lead Doctor Authorization Required to Alter)</span>}
-                </label>
-                <input
-                  type="date"
-                  disabled={isNurse}
-                  value={lmp}
-                  onChange={(e) => setLmp(e.target.value)}
-                  className={`border rounded-lg p-2 text-sm font-semibold text-teal-900 focus:ring-2 focus:ring-teal-500 ${
-                    isNurse ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-300' : 'bg-white border-teal-300'
-                  }`}
-                />
-                <p className="text-[11px] text-teal-700 mt-1">
-                  {isNurse
-                    ? 'Clinical gestational dates and AOG/EDD can only be recalculated by the Doctor.'
-                    : 'Changing LMP will automatically re-calculate AOG and EDD below.'}
-                </p>
-              </div>
+                  <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 sm:col-span-2 lg:col-span-3">
+                    <label className="font-bold text-teal-900 block mb-1 flex items-center space-x-1">
+                      <Calendar className="w-4 h-4 text-teal-600" />
+                      <span>Last Menstrual Period (LMP)</span>
+                      {isNurse && <span className="text-xs text-amber-700 font-normal ml-2">(Lead Doctor Authorization Required to Alter)</span>}
+                    </label>
+                    <input
+                      type="date"
+                      disabled={isNurse}
+                      value={lmp}
+                      onChange={(e) => setLmp(e.target.value)}
+                      className={`border rounded-lg p-2 text-sm font-semibold text-teal-900 focus:ring-2 focus:ring-teal-500 ${
+                        isNurse ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-slate-300' : 'bg-white border-teal-300'
+                      }`}
+                    />
+                    <p className="text-[11px] text-teal-700 mt-1">
+                      {isNurse
+                        ? 'Clinical gestational dates and AOG/EDD can only be recalculated by the Doctor.'
+                        : 'Changing LMP will automatically re-calculate AOG and EDD below.'}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="sm:col-span-2 lg:col-span-3 bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center space-x-2 text-slate-600">
+                  <Stethoscope className="w-4 h-4 text-teal-600 shrink-0" />
+                  <span className="text-[11px]">
+                    <strong>Non-Obstetric Case:</strong> Gestational calculations (LMP, AOG, EDD, and Parity) are automatically disabled for {careType}.
+                  </span>
+                </div>
+              )}
             </form>
           ) : (
             <>
               {/* SUB-HEADER: PATIENT OVERVIEW & GESTATIONAL METRICS (COLLAPSIBLE HEADER) */}
               <div className="pt-4 flex items-center justify-between border-t border-slate-100 mt-4">
                 <div className="flex items-center space-x-2">
-                  <Baby className="w-4 h-4 text-teal-600" />
+                  {isPregnant ? <Baby className="w-4 h-4 text-teal-600" /> : <Stethoscope className="w-4 h-4 text-teal-600" />}
                   <h3 className="text-sm font-bold text-slate-800">
-                    Patient Demographics & Gestational Info
+                    {isPregnant ? 'Patient Demographics & Gestational Info' : 'Patient Demographics & Clinical Profile'}
                   </h3>
                 </div>
 
@@ -540,7 +633,7 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
                       ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                       : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border-teal-200 font-semibold ring-1 ring-teal-400'
                   }`}
-                  title={isOverviewExpanded ? 'Collapse Overview & Gestational Box' : 'Expand Overview & Gestational Box'}
+                  title={isOverviewExpanded ? 'Collapse Overview Box' : 'Expand Overview Box'}
                 >
                   {isOverviewExpanded ? <EyeOff className="w-3.5 h-3.5 text-slate-500" /> : <Eye className="w-3.5 h-3.5 text-teal-600" />}
                   <span>{isOverviewExpanded ? 'Hide Info' : 'Show Info'}</span>
@@ -594,91 +687,195 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({
 
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <span className="text-slate-400 block text-[11px] mb-0.5 flex items-center space-x-1">
-                    <Calendar className="w-3 h-3 text-teal-600" />
-                    <span>LMP (Last Menstrual Period)</span>
+                    {isPregnant ? <Calendar className="w-3 h-3 text-teal-600" /> : <Activity className="w-3 h-3 text-teal-600" />}
+                    <span>{isPregnant ? 'LMP (Last Menstrual Period)' : 'Clinical Care Category'}</span>
                   </span>
-                  <p className="font-bold text-teal-900 text-sm">{patient.lmp || 'Not Set'}</p>
+                  <p className="font-bold text-teal-900 text-sm">
+                    {isPregnant ? (patient.lmp || 'Not Set') : (patient.careType || 'General Medical')}
+                  </p>
                 </div>
               </div>
 
-              {/* AUTO-COMPUTE FEATURE METRICS BAR */}
-              <div className="mt-5 bg-gradient-to-r from-teal-700 via-cyan-700 to-teal-800 text-white rounded-2xl p-4 sm:p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-3 border-b border-teal-600/50 pb-2">
-                  <div className="flex items-center space-x-2">
-                    <Baby className="w-5 h-5 text-teal-200" />
-                    <h3 className="font-bold text-sm text-teal-50 tracking-wide uppercase">
-                      Gestational Auto-Calculations (LMP + 280 Days)
-                    </h3>
-                  </div>
-                  <span className="text-[11px] bg-teal-600/60 text-teal-100 px-2.5 py-0.5 rounded-full border border-teal-500/50 font-mono">
-                    Live Auto-Computed
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-center sm:text-left">
-                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
-                    <span className="text-xs text-teal-200 font-medium block">AOG (Age of Gestation)</span>
-                    <p className="text-xl font-extrabold text-white mt-0.5">
-                      {obgynMetrics.aogFormatted}
-                    </p>
-                    <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
-                      {obgynMetrics.aogWeeks} weeks + {obgynMetrics.aogDays} days
+              {/* DYNAMIC BANNER: GESTATIONAL AUTO-CALCULATIONS FOR PREGNANT OR SPECIALIZED MONITORING FOR OTHERS */}
+              {isPregnant ? (
+                <div className="mt-5 bg-gradient-to-r from-teal-700 via-cyan-700 to-teal-800 text-white rounded-2xl p-4 sm:p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3 border-b border-teal-600/50 pb-2">
+                    <div className="flex items-center space-x-2">
+                      <Baby className="w-5 h-5 text-teal-200" />
+                      <h3 className="font-bold text-sm text-teal-50 tracking-wide uppercase">
+                        Gestational Auto-Calculations (LMP + 280 Days)
+                      </h3>
+                    </div>
+                    <span className="text-[11px] bg-teal-600/60 text-teal-100 px-2.5 py-0.5 rounded-full border border-teal-500/50 font-mono">
+                      Live Auto-Computed
                     </span>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
-                    <span className="text-xs text-teal-200 font-medium block">Estimated Conception Date</span>
-                    <p className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
-                      {obgynMetrics.conceptionDate}
-                    </p>
-                    <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
-                      Ovulation Window (LMP + 14d)
-                    </span>
-                  </div>
-
-                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
-                    <span className="text-xs text-teal-200 font-medium block">EDD (Estimated Due Date)</span>
-                    <p className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
-                      {obgynMetrics.edd}
-                    </p>
-                    <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
-                      Naegele's Rule (+280 Days)
-                    </span>
-                  </div>
-
-                  <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
-                    <span className="text-xs text-teal-200 font-medium block">Trimester Stage</span>
-                    <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
-                      <span className="bg-white text-teal-900 font-black text-xs sm:text-sm px-2.5 py-1 rounded-lg shadow-2xs">
-                        {obgynMetrics.trimester}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-center sm:text-left">
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-xs text-teal-200 font-medium block">AOG (Age of Gestation)</span>
+                      <p className="text-xl font-extrabold text-white mt-0.5">
+                        {obgynMetrics.aogFormatted}
+                      </p>
+                      <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
+                        {obgynMetrics.aogWeeks} weeks + {obgynMetrics.aogDays} days
                       </span>
-                      <span className="text-[11px] text-teal-100">
-                        {obgynMetrics.daysRemaining} days left
+                    </div>
+
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-xs text-teal-200 font-medium block">Estimated Conception Date</span>
+                      <p className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
+                        {obgynMetrics.conceptionDate}
+                      </p>
+                      <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
+                        Ovulation Window (LMP + 14d)
+                      </span>
+                    </div>
+
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-xs text-teal-200 font-medium block">EDD (Estimated Due Date)</span>
+                      <p className="text-lg sm:text-xl font-extrabold text-white mt-0.5">
+                        {obgynMetrics.edd}
+                      </p>
+                      <span className="text-[11px] text-teal-100 block mt-0.5 font-medium">
+                        Naegele's Rule (+280 Days)
+                      </span>
+                    </div>
+
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-xs text-teal-200 font-medium block">Trimester Stage</span>
+                      <div className="flex items-center justify-center sm:justify-start space-x-2 mt-1">
+                        <span className="bg-white text-teal-900 font-black text-xs sm:text-sm px-2.5 py-1 rounded-lg shadow-2xs">
+                          {obgynMetrics.trimester}
+                        </span>
+                        <span className="text-[11px] text-teal-100">
+                          {obgynMetrics.daysRemaining} days left
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* SPECIALIZED CLINICAL MONITORING BANNER FOR NON-PREGNANT PATIENTS */
+                <div className={`mt-5 text-white rounded-2xl p-4 sm:p-5 shadow-sm ${
+                  patient.careType === 'Anti-Rabies / Animal Bite'
+                    ? 'bg-gradient-to-r from-amber-800 via-orange-800 to-amber-900'
+                    : patient.careType === 'Pediatric / Baby Care'
+                    ? 'bg-gradient-to-r from-sky-800 via-blue-800 to-indigo-900'
+                    : patient.careType === 'Vaccination / Immunization'
+                    ? 'bg-gradient-to-r from-violet-800 via-purple-800 to-indigo-900'
+                    : patient.careType === 'Dengue / Fever'
+                    ? 'bg-gradient-to-r from-rose-800 via-red-800 to-rose-900'
+                    : patient.careType === 'Chronic Care'
+                    ? 'bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900'
+                    : 'bg-gradient-to-r from-teal-800 via-slate-800 to-cyan-900'
+                }`}>
+                  <div className="flex items-center justify-between mb-3 border-b border-white/20 pb-2">
+                    <div className="flex items-center space-x-2">
+                      {patient.careType === 'Anti-Rabies / Animal Bite' ? (
+                        <ShieldCheck className="w-5 h-5 text-amber-300" />
+                      ) : patient.careType === 'Vaccination / Immunization' ? (
+                        <Syringe className="w-5 h-5 text-violet-300" />
+                      ) : patient.careType === 'Pediatric / Baby Care' ? (
+                        <Baby className="w-5 h-5 text-sky-300" />
+                      ) : (
+                        <Activity className="w-5 h-5 text-teal-300" />
+                      )}
+                      <h3 className="font-bold text-sm text-white tracking-wide uppercase">
+                        {patient.careType || 'General Medical'} • Clinical Assessment & Triage
+                      </h3>
+                    </div>
+                    <span className="text-[11px] bg-white/20 text-white px-2.5 py-0.5 rounded-full border border-white/30 font-mono">
+                      Outpatient Care
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-center sm:text-left text-xs">
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-white/70 font-medium block">Clinical Care Category</span>
+                      <p className="text-base font-extrabold text-white mt-0.5 truncate">
+                        {patient.careType || 'General OPD'}
+                      </p>
+                      <span className="text-[11px] text-white/80 block mt-0.5">
+                        {patient.careType === 'Anti-Rabies / Animal Bite'
+                          ? 'Post-Exposure Prophylaxis'
+                          : patient.careType === 'Dengue / Fever'
+                          ? 'Hydration & Vitals Monitoring'
+                          : patient.careType === 'Pediatric / Baby Care'
+                          ? 'Infant / Child Health'
+                          : patient.careType === 'Vaccination / Immunization'
+                          ? 'Immunization Registry'
+                          : 'Standard Consultation'}
+                      </span>
+                    </div>
+
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-white/70 font-medium block">Total Checkup Visits</span>
+                      <p className="text-xl font-extrabold text-white mt-0.5">
+                        {patient.checkups.length} Visits
+                      </p>
+                      <span className="text-[11px] text-white/80 block mt-0.5">
+                        {patient.checkups[0] ? `Latest: ${patient.checkups[0].date}` : 'Initial Intake'}
+                      </span>
+                    </div>
+
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-white/70 font-medium block">Latest Vitals Triage</span>
+                      <p className="text-base font-extrabold text-white mt-0.5">
+                        {patient.checkups[0]?.bp ? `BP: ${patient.checkups[0].bp}` : 'BP: Pending'}
+                      </p>
+                      <span className="text-[11px] text-white/80 block mt-0.5">
+                        {patient.checkups[0]?.weightKg ? `Weight: ${patient.checkups[0].weightKg} kg` : 'Weight: Pending'}
+                      </span>
+                    </div>
+
+                    <div className="bg-white/10 backdrop-blur-xs rounded-xl p-3 border border-white/10">
+                      <span className="text-white/70 font-medium block">Prescription Status</span>
+                      <p className="text-base font-extrabold text-white mt-0.5">
+                        {patient.checkups[0]?.prescriptions && patient.checkups[0].prescriptions.length > 0
+                          ? `💊 ${patient.checkups[0].prescriptions.length} Meds Prescribed`
+                          : 'No Active Rx'}
+                      </p>
+                      <span className="text-[11px] text-white/80 block mt-0.5">
+                        {patient.allergies ? `Alert: ${patient.allergies}` : 'No known allergies'}
                       </span>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             /* COMPACT COLLAPSED SUMMARY STRIP */
             <div
               onClick={() => setIsOverviewExpanded(true)}
               className="mt-4 p-3 bg-slate-50 hover:bg-teal-50/50 border border-slate-200 hover:border-teal-300 rounded-xl transition flex items-center justify-between gap-3 text-xs cursor-pointer group"
-              title="Click to expand full patient overview & gestational calculations"
+              title="Click to expand full patient overview"
             >
               <div className="flex items-center space-x-3 sm:space-x-4 flex-wrap gap-y-1">
-                <span className="font-bold text-teal-900 flex items-center space-x-1">
-                  <Baby className="w-3.5 h-3.5 text-teal-600 inline" />
-                  <span>AOG: <strong>{obgynMetrics.aogFormatted}</strong></span>
-                </span>
+                {isPregnant ? (
+                  <>
+                    <span className="font-bold text-teal-900 flex items-center space-x-1">
+                      <Baby className="w-3.5 h-3.5 text-teal-600 inline" />
+                      <span>AOG: <strong>{obgynMetrics.aogFormatted}</strong></span>
+                    </span>
+                    <span className="text-slate-300 hidden sm:inline">•</span>
+                    <span className="text-slate-700">EDD: <strong>{obgynMetrics.edd}</strong></span>
+                    <span className="text-slate-300 hidden sm:inline">•</span>
+                    <span className="bg-teal-100 text-teal-800 font-semibold px-2 py-0.2 rounded">
+                      {obgynMetrics.trimester} Trimester
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold text-teal-900 flex items-center space-x-1">
+                      <Activity className="w-3.5 h-3.5 text-teal-600 inline" />
+                      <span>Care: <strong>{patient.careType || 'General Medical'}</strong></span>
+                    </span>
+                    <span className="text-slate-300 hidden sm:inline">•</span>
+                    <span className="text-slate-700">Visits: <strong>{patient.checkups.length}</strong></span>
+                  </>
+                )}
                 <span className="text-slate-300 hidden sm:inline">•</span>
-                <span className="text-slate-700">EDD: <strong>{obgynMetrics.edd}</strong></span>
-                <span className="text-slate-300 hidden sm:inline">•</span>
-                <span className="bg-teal-100 text-teal-800 font-semibold px-2 py-0.2 rounded">
-                  {obgynMetrics.trimester} Trimester
-                </span>
-                <span className="text-slate-300 hidden md:inline">•</span>
                 <span className="text-slate-500 hidden md:inline">Contact: {patient.contactNumber}</span>
               </div>
               <div className="flex items-center space-x-1 text-teal-700 font-semibold text-[11px] group-hover:underline shrink-0">

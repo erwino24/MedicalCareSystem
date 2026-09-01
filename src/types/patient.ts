@@ -24,6 +24,16 @@ export interface CheckupRecord {
   prescriptions?: PrescriptionItem[];
 }
 
+export type PatientCareType =
+  | 'Pregnant'
+  | 'Pediatric / Baby Care'
+  | 'Anti-Rabies / Animal Bite'
+  | 'Vaccination / Immunization'
+  | 'Dengue / Fever'
+  | 'General Illness'
+  | 'Chronic Care'
+  | 'Routine Checkup';
+
 export interface Patient {
   id: string;
   fullName: string;
@@ -37,14 +47,28 @@ export interface Patient {
   emergencyContactNumber?: string;
   emergencyContactAddress?: string;
   bloodType: string;
+  careType?: PatientCareType; // 'Pregnant' | 'General Illness' | 'Dengue / Fever' | 'Chronic Care' | 'Routine Checkup'
   gravida: number; // G - Number of pregnancies
   para: number;    // P - Number of births
-  lmp: string;     // YYYY-MM-DD (Last Menstrual Period)
+  lmp: string;     // YYYY-MM-DD (Last Menstrual Period - optional/fallback for non-pregnant)
   illnessHistory: string;
   allergies?: string;
   status?: 'Active' | 'Inactive';
   checkups: CheckupRecord[];
 }
+
+export type AppointmentType =
+  | 'Routine Prenatal'
+  | 'Ultrasound Scan'
+  | 'High Risk Consult'
+  | 'Postpartum Check'
+  | 'First Prenatal Visit'
+  | 'Anti-Rabies Vaccine Dose'
+  | 'Pediatric / Baby Check'
+  | 'Vaccine Shot / Booster'
+  | 'Dengue / Fever Check'
+  | 'General Consultation'
+  | 'Chronic Care Follow-up';
 
 export interface Appointment {
   id: string;
@@ -52,7 +76,7 @@ export interface Appointment {
   patientName: string;
   date: string; // YYYY-MM-DD
   time: string; // e.g. "09:30 AM"
-  type: 'Routine Prenatal' | 'Ultrasound Scan' | 'High Risk Consult' | 'Postpartum Check' | 'First Prenatal Visit';
+  type: AppointmentType;
   notes?: string;
   status: 'Scheduled' | 'Completed' | 'Cancelled';
 }
